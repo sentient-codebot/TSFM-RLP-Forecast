@@ -22,8 +22,8 @@ def main():
     dataset = get_example_dataset(data_config)
     trainer = ExampleTrainer(lr=0.001, epochs=50)
     estimator = ExampleEstimator(
-        prediction_length=model_config.prediction_length,
-        lookback_length=model_config.lookback_length,
+        prediction_length=model_config.prediction_length, # TODO: should be in the data config
+        past_length=model_config.past_length,
         hidden_dim=model_config.hidden_dim,
         trainer=trainer,
     )

@@ -1,3 +1,4 @@
 model_class: example
 hidden_dim: 128
+past_length: 48
 prediction_length: 24

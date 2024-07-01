@@ -78,14 +78,14 @@ class ExampleDataConfig(DataConfig):
         
 @dataclass
 class ModelConfig(BaseConfig):
-    model_class: str # e.g., lag-llama, chronos
-    predictinon_length: int
+    model_class: str = 'example' # e.g., lag-llama, chronos
+    predictinon_length: int = 24
     # some_common_model_settings: str
     
 @dataclass
 class ExampleModelConfig(ModelConfig):
     hidden_dim: int = 6
-    lookback_length: int = 48
+    past_length: int = 48
     
 @dataclass
 class ExperimentConfig(BaseConfig):

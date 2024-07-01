@@ -8,12 +8,25 @@ from dataclasses import dataclass
 import torch
 import torch.nn as nn
 from torch import Tensor
+import torch.utils
+from torch.utils.data import DataLoader
 import numpy as np
 from numpy import ndarray
+
 import gluonts as ts
 from gluonts.core.component import validated
-import torch.utils
-import torch.utils.data
+from gluonts.dataset.field_names import FieldName
+from gluonts.dataset.loader import TrainDataLoader
+from gluonts.itertools import Cached
+from gluonts.torch.batchify import batchify
+from gluonts.transform import (
+    Transformation,
+    AddObservedValuesIndicator,
+    InstanceSplitter,
+    ExpectedNumInstanceSampler,
+    TestSplitSampler,
+)
+
 from tqdm import tqdm
 
 from .typing import Float, Int, Callable
@@ -24,17 +37,17 @@ class GluonTSNetwork(ABC):
         raise NotImplementedError
 
 class LinearModel(nn.Module):
-    def __init__(self, lookback_length: int, prediction_length: int, hidden_dim: int = 50):
+    def __init__(self, past_length: int, prediction_length: int, hidden_dim: int = 50):
         super().__init__()
-        self.lookback_length = lookback_length
+        self.past_length = past_length
         self.prediction_length = prediction_length
         self.hidden_dim = hidden_dim
         self.linear = nn.Sequential(
-            nn.Linear(lookback_length, hidden_dim),
+            nn.Linear(past_length, hidden_dim),
             nn.Linear(hidden_dim, prediction_length)
         )
         
-    def forward(self, x: Float[Tensor, 'batch, lookback_length']) -> Float[Tensor, 'batch, prediction_length']:
+    def forward(self, x: Float[Tensor, 'batch, past_length']) -> Float[Tensor, 'batch, prediction_length']:
         return self.linear(x)
     
 class ExampleTrainNetwork(GluonTSNetwork):
@@ -61,7 +74,7 @@ class ExamplePredNetwork(GluonTSNetwork):
     
 @dataclass
 class TrainerOutput:
-    dataloader: torch.utils.data.DataLoader
+    dataloader: DataLoader
     network: ExampleTrainNetwork
     current_epoch: int
     epoch_loss: float
@@ -74,7 +87,7 @@ class ExampleTrainer():
     def train(
         self,
         network: ExampleTrainNetwork,
-        dataloader: torch.utils.data.DataLoader,
+        dataloader: DataLoader,
     ):
         optimizer = torch.optim.Adam(network.model.parameters(), lr=self.lr)
         for epoch in range(self.epochs):
@@ -97,12 +110,12 @@ class ExampleEstimator():
     def __init__(
         self,
         prediction_length: int,
-        lookback_length: int,
+        past_length: int,
         hidden_dim: int,
         trainer: ExampleTrainer,
     ) -> None:
         self.prediction_length = prediction_length
-        self.lookback_length = lookback_length
+        self.past_length = past_length
         self.hidden_dim = hidden_dim
         self.model = None
         self.train_network = None
@@ -113,13 +126,35 @@ class ExampleEstimator():
         # skip for this example
         raise NotImplementedError
     
-    def create_training_data_loader(self, dataset: ts.dataset.repository.Dataset):
-        # TODO
-        # self.dataloader 
-        raise NotImplementedError
+    def create_training_data_loader(self, dataset: ts.dataset.Dataset, batch_size: int=64, num_batches_per_epoch: int=50, **kwargs):
+        mask_unobserved = AddObservedValuesIndicator(
+            target_field=FieldName.TARGET,
+            output_field=FieldName.OBSERVED_VALUES,
+        )
+        training_splitter = InstanceSplitter(
+            target_field=FieldName.TARGET,
+            is_pad_field=FieldName.IS_PAD,
+            start_field=FieldName.START,
+            forecast_start_field=FieldName.FORECAST_START,
+            train_sampler=ExpectedNumInstanceSampler(
+                num_instances=1,
+                min_future=self.prediction_length,
+            ),
+            past_length=self.past_length,
+            future_length=self.prediction_length,
+            time_series_fields=[FieldName.FEAT_DYNAMIC_REAL],
+        )
+        dataloader = TrainDataLoader(
+            Cached(dataset.train),
+            batch_size=batch_size,
+            stack_fn=batchify,
+            transform=mask_unobserved + training_splitter,
+            num_batches_per_epoch=num_batches_per_epoch,
+        )
+        raise dataloader
     
     def create_training_network(self):
-        self.model = LinearModel(self.lookback_length, self.prediction_length, self.hidden_dim)
+        self.model = LinearModel(self.past_length, self.prediction_length, self.hidden_dim)
         self.train_network = ExampleTrainNetwork(self.model, nn.MSELoss())
         return self.train_network
         
@@ -131,7 +166,7 @@ class ExampleEstimator():
         # TODO: how exactly is a predictor defined?
         ... # return predictor
         
-    def train(self, dataset: ts.ts.dataset.repository.Dataset) -> None:
+    def train(self, dataset: ts.dataset.Dataset) -> None:
         assert self.train_network is not None, "training network is not created yet"
         dataloader = self.create_training_data_loader(dataset)
         it = self.trainer.train(
