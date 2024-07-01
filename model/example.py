@@ -136,13 +136,13 @@ class ExampleEstimator():
             is_pad_field=FieldName.IS_PAD,
             start_field=FieldName.START,
             forecast_start_field=FieldName.FORECAST_START,
-            train_sampler=ExpectedNumInstanceSampler(
+            instance_sampler=ExpectedNumInstanceSampler(
                 num_instances=1,
                 min_future=self.prediction_length,
             ),
             past_length=self.past_length,
             future_length=self.prediction_length,
-            time_series_fields=[FieldName.FEAT_DYNAMIC_REAL],
+            time_series_fields=[FieldName.OBSERVED_VALUES],
         )
         dataloader = TrainDataLoader(
             Cached(dataset.train),
@@ -151,6 +151,9 @@ class ExampleEstimator():
             transform=mask_unobserved + training_splitter,
             num_batches_per_epoch=num_batches_per_epoch,
         )
+        # next(iter(dataloader)).keys()
+        # dict_keys(['start', 'feat_static_cat', 'item_id', 'past_observed_values', 'future_observed_values', 'past_target', 'future_target', 'past_is_pad', 'forecast_start'])
+        # mainly use: 'past_target', 'future_target'
         return dataloader
     
     def create_training_network(self):
