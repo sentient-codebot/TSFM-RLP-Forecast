@@ -4,6 +4,7 @@ author: sentient-codebot
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import enum
 
 import torch
 import torch.nn as nn
@@ -12,6 +13,7 @@ import torch.utils
 from torch.utils.data import DataLoader
 import numpy as np
 from numpy import ndarray
+from einops import rearrange
 
 import gluonts as ts
 from gluonts.core.component import validated
@@ -34,9 +36,14 @@ from tqdm import tqdm
 
 from .typing import Float, Int, Callable
 
-class GluonTSNetwork(ABC):
+class ForecastType(enum.Enum):
+    POINT = enum.auto()
+    QUANTILE = enum.auto()
+    STUDENTT = enum.auto()
+
+class GluonTSNetwork(ABC, nn.Module):
     @abstractmethod
-    def hybrid_forward(self, F, past_target, future_target):
+    def hybrid_forward(self, dict_args: dict):
         raise NotImplementedError
 
 class LinearModel(nn.Module):
@@ -55,6 +62,7 @@ class LinearModel(nn.Module):
     
 class ExampleTrainNetwork(GluonTSNetwork):
     def __init__(self, model: nn.Module, loss_function: Callable):
+        super().__init__()
         self.model = model
         self.loss_fn = loss_function
         
@@ -64,15 +72,28 @@ class ExampleTrainNetwork(GluonTSNetwork):
         loss = self.loss_fn(prediction, future_target) # make sure to return a scalar
         return loss
     
+    # TODO: WHY tf does GluonTS make "hybrid_forward" AN MANDATORY METHOD????? 
+    def forward(self, *args, **kwargs):
+        return self.hybrid_forward(*args, **kwargs)
+    
 class ExamplePredNetwork(GluonTSNetwork):
-    def __init__(self, model: nn.Module):
+    def __init__(self, model: nn.Module, forcast_type: ForecastType = ForecastType.POINT):
+        super().__init__()
         self.model = model
+        self.forecast_type = forcast_type
         
     @torch.no_grad()
-    def hybrid_forward(self, F, past_target, future_target):
+    def hybrid_forward(self, past_target):
         self.model.eval()
         prediction = self.model(past_target)
         return prediction
+    
+    def forward(self, *args, **kwargs):
+        prediction = self.hybrid_forward(*args, **kwargs)
+        if self.forecast_type == ForecastType.POINT:
+            return rearrange(prediction, 'b l -> b () l')
+        else:
+            raise NotImplementedError(f"forecast {self.forecast_type} not implemented")
     
 @dataclass
 class TrainerOutput:
@@ -95,14 +116,18 @@ class ExampleTrainer():
         optimizer = torch.optim.Adam(network.model.parameters(), lr=self.lr)
         for epoch in range(self.epochs):
             epoch_loss = 0.
+            epoch_count = 0
             for data_entry in dataloader: # data_entry is a dict
                 optimizer.zero_grad()
                 past_target = data_entry['past_target'].to(self.device)
                 future_target = data_entry['future_target'].to(self.device)
                 loss = network.hybrid_forward(past_target, future_target) # return loss
                 loss.backward()
+                nn.utils.clip_grad_norm_(network.model.parameters(), 1.0)
                 optimizer.step()
                 epoch_loss += loss.item()
+                epoch_count += past_target.shape[0]
+            epoch_loss /= epoch_count # average per sample
             yield TrainerOutput(dataloader, network, epoch, epoch_loss)
 
 """the estimator class is central to the use of GluonTS models. 
@@ -168,6 +193,10 @@ class ExampleEstimator():
         
     def create_predictor(self, batch_size: int=32):
         assert self.model is not None, "model is not created yet"
+        mask_unobserved = AddObservedValuesIndicator(
+            target_field=FieldName.TARGET,
+            output_field=FieldName.OBSERVED_VALUES,
+        )
         prediction_splitter = InstanceSplitter(
             target_field=FieldName.TARGET,
             is_pad_field=FieldName.IS_PAD,
@@ -185,9 +214,10 @@ class ExampleEstimator():
             input_names=['past_target'],
             prediction_net=self.pred_network,
             batch_size=batch_size,
-            input_transform=prediction_splitter,
-            forecast_generator=QuantileForecastGenerator(quantiles=[0.5]), # what should I use?
-        )
+            input_transform=mask_unobserved + prediction_splitter,
+            forecast_generator=QuantileForecastGenerator(quantiles=[0.5]),
+            # output_transform=lambda input, model_pred: rearrange(model_pred, 'b l -> b () l'), # [batch, prediction_length] -> [batch, 1, prediction_length]
+        ) # output_transform: repeat unsqueeze for each quantile
         
     def train(self, dataset: ts.dataset.Dataset) -> None:
         assert self.train_network is not None, "training network is not created yet"
@@ -201,3 +231,5 @@ class ExampleEstimator():
             print(f"epoch {output.current_epoch}, loss: {output.epoch_loss}")
             
         print("training complete")
+        
+        return self.create_predictor()

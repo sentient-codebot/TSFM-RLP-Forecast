@@ -20,7 +20,7 @@ def main():
         model=model_config,
     )
     dataset = get_example_dataset(data_config)
-    trainer = ExampleTrainer(lr=0.001, epochs=50)
+    trainer = ExampleTrainer(lr=0.0001, epochs=10)
     estimator = ExampleEstimator(
         prediction_length=model_config.prediction_length, # TODO: should be in the data config
         past_length=model_config.past_length,
@@ -42,15 +42,17 @@ def main():
     plt.plot(ts_entry[-150:].to_timestamp())
     forecast_entry.plot(show_label=True)
     plt.legend()
+    pass
     
-    evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
+    evaluator = Evaluator(quantiles=['0.5']) # which quantiles to evaluate NEED to match the model specification. 
     agg_metrics, item_metrics = evaluator(
         iter(ts_it),
         iter(forecast_it),
-        num_series=len(dataset.test),
+        num_series=len(dataset.test)-1,
     )
-    print(json.dump(agg_metrics, indent=4))
+    print(json.dumps(agg_metrics, indent=4))
     print(item_metrics.head())
+    pass
 
 if __name__ == "__main__":
     main()
