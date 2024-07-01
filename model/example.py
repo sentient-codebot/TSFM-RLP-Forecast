@@ -14,6 +14,7 @@ from torch.utils.data import DataLoader
 import numpy as np
 from numpy import ndarray
 from einops import rearrange
+from einops.layers.torch import Rearrange
 
 import gluonts as ts
 from gluonts.core.component import validated
@@ -47,14 +48,14 @@ class GluonTSNetwork(ABC, nn.Module):
         raise NotImplementedError
 
 class LinearModel(nn.Module):
-    def __init__(self, past_length: int, prediction_length: int, hidden_dim: int = 50):
+    def __init__(self, input_dim: int, output_dim: int, hidden_dim: int = 50):
         super().__init__()
-        self.past_length = past_length
-        self.prediction_length = prediction_length
+        self.input_dim = input_dim
+        self.output_dim = output_dim
         self.hidden_dim = hidden_dim
         self.linear = nn.Sequential(
-            nn.Linear(past_length, hidden_dim),
-            nn.Linear(hidden_dim, prediction_length)
+            nn.Linear(input_dim, hidden_dim),
+            nn.Linear(hidden_dim, output_dim)
         )
         
     def forward(self, x: Float[Tensor, 'batch, past_length']) -> Float[Tensor, 'batch, prediction_length']:
@@ -77,10 +78,17 @@ class ExampleTrainNetwork(GluonTSNetwork):
         return self.hybrid_forward(*args, **kwargs)
     
 class ExamplePredNetwork(GluonTSNetwork):
-    def __init__(self, model: nn.Module, forcast_type: ForecastType = ForecastType.POINT):
+    def __init__(self, model: nn.Module, forecast_type: ForecastType = ForecastType.POINT):
         super().__init__()
         self.model = model
-        self.forecast_type = forcast_type
+        self.forecast_type = forecast_type
+        self.output_head = None
+        if forecast_type == ForecastType.POINT:
+            self.output_head = Rearrange('b l -> b () l')
+        elif forecast_type == ForecastType.STUDENTT:
+            self.output_head = StudentTOutput().get_args_proj(in_features=self.model.output_dim)
+        else:
+            raise NotImplementedError(f"forecast {self.forecast_type} not implemented")
         
     @torch.no_grad()
     def hybrid_forward(self, past_target):
@@ -90,10 +98,7 @@ class ExamplePredNetwork(GluonTSNetwork):
     
     def forward(self, *args, **kwargs):
         prediction = self.hybrid_forward(*args, **kwargs)
-        if self.forecast_type == ForecastType.POINT:
-            return rearrange(prediction, 'b l -> b () l')
-        else:
-            raise NotImplementedError(f"forecast {self.forecast_type} not implemented")
+        return self.output_head(prediction)
     
 @dataclass
 class TrainerOutput:
