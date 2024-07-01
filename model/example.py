@@ -19,6 +19,9 @@ from gluonts.dataset.field_names import FieldName
 from gluonts.dataset.loader import TrainDataLoader
 from gluonts.itertools import Cached
 from gluonts.torch.batchify import batchify
+from gluonts.torch.distributions import StudentTOutput
+from gluonts.torch.model.predictor import PyTorchPredictor
+from gluonts.model.forecast_generator import QuantileForecastGenerator
 from gluonts.transform import (
     Transformation,
     AddObservedValuesIndicator,
@@ -55,8 +58,7 @@ class ExampleTrainNetwork(GluonTSNetwork):
         self.model = model
         self.loss_fn = loss_function
         
-    def hybrid_forward(self, F, past_target, future_target):
-        # NOTE: the F is merely following the official tutorial. 
+    def hybrid_forward(self, past_target, future_target):
         self.model.train()
         prediction = self.model(past_target)
         loss = self.loss_fn(prediction, future_target) # make sure to return a scalar
@@ -80,9 +82,10 @@ class TrainerOutput:
     epoch_loss: float
     
 class ExampleTrainer():
-    def __init__(self, lr: float, epochs: int):
+    def __init__(self, lr: float, epochs: int, device: torch.device|None = None):
         self.lr = lr
         self.epochs = epochs
+        self.device = device or torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
     def train(
         self,
@@ -92,8 +95,10 @@ class ExampleTrainer():
         optimizer = torch.optim.Adam(network.model.parameters(), lr=self.lr)
         for epoch in range(self.epochs):
             epoch_loss = 0.
-            for past_target, future_target in dataloader:
+            for data_entry in dataloader: # data_entry is a dict
                 optimizer.zero_grad()
+                past_target = data_entry['past_target'].to(self.device)
+                future_target = data_entry['future_target'].to(self.device)
                 loss = network.hybrid_forward(past_target, future_target) # return loss
                 loss.backward()
                 optimizer.step()
@@ -161,13 +166,28 @@ class ExampleEstimator():
         self.train_network = ExampleTrainNetwork(self.model, nn.MSELoss())
         return self.train_network
         
-    def create_predictor(self, transformation):
+    def create_predictor(self, batch_size: int=32):
         assert self.model is not None, "model is not created yet"
-        ... # transformations
+        prediction_splitter = InstanceSplitter(
+            target_field=FieldName.TARGET,
+            is_pad_field=FieldName.IS_PAD,
+            start_field=FieldName.START,
+            forecast_start_field=FieldName.FORECAST_START,
+            instance_sampler=TestSplitSampler(),
+            past_length=self.past_length,
+            future_length=self.prediction_length,
+            time_series_fields=[FieldName.OBSERVED_VALUES],
+        )
         self.pred_network = ExamplePredNetwork(self.model)
         
-        # TODO: how exactly is a predictor defined?
-        ... # return predictor
+        return PyTorchPredictor(
+            prediction_length=self.prediction_length,
+            input_names=['past_target'],
+            prediction_net=self.pred_network,
+            batch_size=batch_size,
+            input_transform=prediction_splitter,
+            forecast_generator=QuantileForecastGenerator(quantiles=[0.5]), # what should I use?
+        )
         
     def train(self, dataset: ts.dataset.Dataset) -> None:
         assert self.train_network is not None, "training network is not created yet"
