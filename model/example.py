@@ -67,15 +67,15 @@ class ExampleTrainNetwork(GluonTSNetwork):
         self.model = model
         self.loss_fn = loss_function
         
-    def hybrid_forward(self, past_target, future_target):
+    def forward(self, past_target, future_target):
         self.model.train()
         prediction = self.model(past_target)
         loss = self.loss_fn(prediction, future_target) # make sure to return a scalar
         return loss
     
     # TODO: WHY tf does GluonTS make "hybrid_forward" AN MANDATORY METHOD????? 
-    def forward(self, *args, **kwargs):
-        return self.hybrid_forward(*args, **kwargs)
+    # def forward(self, *args, **kwargs):
+    #     return self.hybrid_forward(*args, **kwargs)
     
 class ExamplePredNetwork(GluonTSNetwork):
     def __init__(self, model: nn.Module, forecast_type: ForecastType = ForecastType.POINT):
@@ -86,7 +86,8 @@ class ExamplePredNetwork(GluonTSNetwork):
         if forecast_type == ForecastType.POINT:
             self.output_head = Rearrange('b l -> b () l')
         elif forecast_type == ForecastType.STUDENTT:
-            self.output_head = StudentTOutput().get_args_proj(in_features=self.model.output_dim)
+            raise NotImplementedError('not quite correct yet. also need to adjust the train net.')
+            # self.output_head = StudentTOutput().get_args_proj(in_features=self.model.output_dim)
         else:
             raise NotImplementedError(f"forecast {self.forecast_type} not implemented")
         
