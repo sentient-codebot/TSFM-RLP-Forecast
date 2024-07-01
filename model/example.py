@@ -113,7 +113,7 @@ class ExampleEstimator():
         # skip for this example
         raise NotImplementedError
     
-    def create_training_data_loader(self):
+    def create_training_data_loader(self, dataset: ts.dataset.repository.Dataset):
         # TODO
         # self.dataloader 
         raise NotImplementedError
@@ -131,9 +131,9 @@ class ExampleEstimator():
         # TODO: how exactly is a predictor defined?
         ... # return predictor
         
-    def train(self) -> None:
+    def train(self, dataset: ts.ts.dataset.repository.Dataset) -> None:
         assert self.train_network is not None, "training network is not created yet"
-        dataloader = self.create_training_data_loader()
+        dataloader = self.create_training_data_loader(dataset)
         it = self.trainer.train(
             self.train_network,
             dataloader,

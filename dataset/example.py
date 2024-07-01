@@ -5,5 +5,5 @@ author: sentient-codebot
 """
 from gluonts.dataset.repository import get_dataset, dataset_names
 
-def get_example_dataset():
+def get_example_dataset(*args, **kwargs):
     return get_dataset("electricity_nips")

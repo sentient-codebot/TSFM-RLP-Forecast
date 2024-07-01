@@ -73,16 +73,19 @@ class DataConfig(BaseConfig):
     
 @dataclass
 class ExampleDataConfig(DataConfig):
-    param_only_for_this_dataset: str
+    # param_only_for_this_dataset: str
+    pass
         
 @dataclass
 class ModelConfig(BaseConfig):
     model_class: str # e.g., lag-llama, chronos
+    predictinon_length: int
     # some_common_model_settings: str
     
 @dataclass
 class ExampleModelConfig(ModelConfig):
-    param_only_for_this_model: int = 6
+    hidden_dim: int = 6
+    lookback_length: int = 48
     
 @dataclass
 class ExperimentConfig(BaseConfig):

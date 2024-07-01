@@ -1,0 +1,3 @@
+model_class: example
+hidden_dim: 128
+prediction_length: 24
