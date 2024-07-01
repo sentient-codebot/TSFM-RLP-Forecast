@@ -151,7 +151,7 @@ class ExampleEstimator():
             transform=mask_unobserved + training_splitter,
             num_batches_per_epoch=num_batches_per_epoch,
         )
-        raise dataloader
+        return dataloader
     
     def create_training_network(self):
         self.model = LinearModel(self.past_length, self.prediction_length, self.hidden_dim)

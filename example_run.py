@@ -27,8 +27,8 @@ def main():
         hidden_dim=model_config.hidden_dim,
         trainer=trainer,
     )
-    estimator.create_training_data_loader(dataset)
-    estimator.create_training_network()
+    _dl = estimator.create_training_data_loader(dataset)
+    _net = estimator.create_training_network()
     predictor = estimator.train(dataset)
     
     # Evaluation
