@@ -43,9 +43,10 @@ class ForecastType(enum.Enum):
     STUDENTT = enum.auto()
 
 class GluonTSNetwork(ABC, nn.Module):
-    @abstractmethod
-    def hybrid_forward(self, dict_args: dict):
-        raise NotImplementedError
+    # @abstractmethod
+    # def forward(self, *args, **kwargs):
+    #     raise NotImplementedError
+    pass
 
 class LinearModel(nn.Module):
     def __init__(self, input_dim: int, output_dim: int, hidden_dim: int = 50):
@@ -74,6 +75,7 @@ class ExampleTrainNetwork(GluonTSNetwork):
         return loss
     
     # TODO: WHY tf does GluonTS make "hybrid_forward" AN MANDATORY METHOD????? 
+    # NOTE: current version: removed the hybrid_forward method. it is now the forward method. works totally fine. wtf wrote that tutorial? 
     # def forward(self, *args, **kwargs):
     #     return self.hybrid_forward(*args, **kwargs)
     
@@ -92,14 +94,13 @@ class ExamplePredNetwork(GluonTSNetwork):
             raise NotImplementedError(f"forecast {self.forecast_type} not implemented")
         
     @torch.no_grad()
-    def hybrid_forward(self, past_target):
+    def forward(self, past_target):
         self.model.eval()
         prediction = self.model(past_target)
-        return prediction
-    
-    def forward(self, *args, **kwargs):
-        prediction = self.hybrid_forward(*args, **kwargs)
         return self.output_head(prediction)
+    
+    # def forward(self, *args, **kwargs):
+    #     return self.hybrid_forward(*args, **kwargs)
     
 @dataclass
 class TrainerOutput:
@@ -127,7 +128,7 @@ class ExampleTrainer():
                 optimizer.zero_grad()
                 past_target = data_entry['past_target'].to(self.device)
                 future_target = data_entry['future_target'].to(self.device)
-                loss = network.hybrid_forward(past_target, future_target) # return loss
+                loss = network.forward(past_target, future_target) # return loss
                 loss.backward()
                 nn.utils.clip_grad_norm_(network.model.parameters(), 1.0)
                 optimizer.step()
