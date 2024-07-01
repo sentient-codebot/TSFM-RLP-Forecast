@@ -79,7 +79,7 @@ class ExampleDataConfig(DataConfig):
 @dataclass
 class ModelConfig(BaseConfig):
     model_class: str = 'example' # e.g., lag-llama, chronos
-    predictinon_length: int = 24
+    prediction_length: int = 24
     # some_common_model_settings: str
     
 @dataclass
