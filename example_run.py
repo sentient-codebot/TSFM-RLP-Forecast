@@ -43,6 +43,7 @@ def main():
     forecast_entry = next(iter(forecast_it))
     plt.plot(ts_entry[-150:].to_timestamp())
     forecast_entry.plot(show_label=True)
+    plt.setp(plt.gca().get_xticklabels(), rotation=45, ha='right')
     plt.legend()
     pass
     

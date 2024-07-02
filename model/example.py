@@ -49,7 +49,7 @@ class GluonTSNetwork(ABC, nn.Module):
     #     raise NotImplementedError
     pass
 
-class LinearModel(nn.Module):
+class MLPModel(nn.Module):
     def __init__(self, input_dim: int, output_dim: int, hidden_dim: int = 50, make_output_head: Callable|None = None):
         super().__init__()
         self.input_dim = input_dim
@@ -57,6 +57,7 @@ class LinearModel(nn.Module):
         self.hidden_dim = hidden_dim
         self.linear = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
+            nn.SiLU(),
             nn.Linear(hidden_dim, output_dim)
         )
         if make_output_head is None:
@@ -228,10 +229,10 @@ class ExampleEstimator():
     
     def create_model(self):
         if self.forecast_type == ForecastType.POINT:
-            self.model = LinearModel(self.past_length, self.prediction_length, self.hidden_dim)
+            self.model = MLPModel(self.past_length, self.prediction_length, self.hidden_dim)
         elif self.forecast_type == ForecastType.STUDENTT:
-            self.model = LinearModel(self.past_length, self.prediction_length, self.hidden_dim, 
-                                     make_output_head=lambda: make_student_t_output_head(self.prediction_length, self.prediction_length))
+            self.model = MLPModel(self.past_length, self.prediction_length * self.hidden_dim, self.hidden_dim, 
+                                     make_output_head=lambda: make_student_t_output_head(self.prediction_length * self.hidden_dim, self.prediction_length))
         return self.model
     
     def create_training_network(self):
@@ -284,9 +285,10 @@ class ExampleEstimator():
             self.train_network,
             dataloader,
         )
-        for output in tqdm(it, total=self.trainer.epochs):
+        pbar = tqdm(it, total=self.trainer.epochs)
+        for output in pbar:
             # output is a TrainerOutput
-            print(f"epoch {output.current_epoch}, loss: {output.epoch_loss}")
+            pbar.set_description(f"epoch {output.current_epoch}, loss: {output.epoch_loss:.4f}")
             
         print("training complete")
         
