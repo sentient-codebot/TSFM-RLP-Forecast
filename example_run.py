@@ -4,6 +4,7 @@ import matplotlib as mpl
 import json
 
 from dataset.example import get_example_dataset
+import model
 from model.example import ExampleEstimator, ExampleTrainer
 from utility.configuration import ExampleDataConfig, ExampleModelConfig, ExperimentConfig
 
@@ -20,11 +21,12 @@ def main():
         model=model_config,
     )
     dataset = get_example_dataset(data_config)
-    trainer = ExampleTrainer(lr=0.0001, epochs=10)
+    trainer = ExampleTrainer(lr=0.0001, epochs=50)
     estimator = ExampleEstimator(
         prediction_length=model_config.prediction_length, # TODO: should be in the data config
         past_length=model_config.past_length,
         hidden_dim=model_config.hidden_dim,
+        forecast_type=model.ForecastType.STUDENTT,
         trainer=trainer,
     )
     _dl = estimator.create_training_data_loader(dataset)
@@ -44,7 +46,10 @@ def main():
     plt.legend()
     pass
     
-    evaluator = Evaluator(quantiles=['0.5']) # which quantiles to evaluate NEED to match the model specification. 
+    if estimator.forecast_type == model.ForecastType.POINT:
+        evaluator = Evaluator(quantiles=['0.5']) # which quantiles to evaluate NEED to match the model specification. 
+    else:
+        evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
     agg_metrics, item_metrics = evaluator(
         iter(ts_it),
         iter(forecast_it),
