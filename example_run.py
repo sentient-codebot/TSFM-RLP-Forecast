@@ -29,6 +29,7 @@ def main():
         forecast_type=model.ForecastType.STUDENTT,
         trainer=trainer,
     )
+    estimator.create_training_network()
     predictor = estimator.train(dataset)
     
     # Evaluation
