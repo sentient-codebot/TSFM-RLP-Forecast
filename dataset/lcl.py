@@ -5,6 +5,7 @@ date: 2024-07-03
 import os
 
 import pandas as pd
+from gluonts.dataset.split import split
 from gluonts.dataset.pandas import PandasDataset
 
 def main():
@@ -42,6 +43,17 @@ def main():
         dfs_dict[item_id] = gdf.reindex(new_index).drop('LCLid', axis=1)
 
     ds = PandasDataset(dfs_dict, target='KWH/hh (per half hour) ', feat_dynamic_real=['isToU']) # each key is an item id
+    
+    # train/test split
+    prediction_length = 3 * 48
+    ds_train, test_template = split(
+        ds,
+        offset = -1440
+    )
+    test_pairs = test_template.generate_instances(
+        prediction_length=prediction_length,
+        windows=3,
+    )
     pass
     
 if __name__ == "__main__":
