@@ -4,7 +4,7 @@ import os
 from abc import abstractmethod
 from functools import partial
 from argparse import ArgumentParser, Namespace
-
+from typing import Union
 import yaml
 
 @dataclass
@@ -100,7 +100,7 @@ class ExperimentConfig(BaseConfig):
     }
     
     @classmethod
-    def init_subconfig(cls, subconfig_name, subconfig_dict) -> BaseConfig|dict:
+    def init_subconfig(cls, subconfig_name, subconfig_dict) -> Union[BaseConfig, dict]:
         if subconfig_name not in cls.subconfigs:
             return subconfig_dict
         if subconfig_name == 'data':
