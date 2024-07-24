@@ -1,7 +1,7 @@
 import os
 import sys
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-dataset_path = os.path.join(parent_dir, 'dataset')
+# dataset_path = os.path.join(parent_dir, 'dataset')
 sys.path.append(parent_dir)
 from typing import Union
 
@@ -48,6 +48,12 @@ if __name__ == "__main__":
                 country = country,
                 data_type = _type,
             )
+            if reso == '60m':
+                pred_length = 24
+            elif reso == '30m':
+                pred_length = 48
+            elif reso == '15m':
+                pred_length = 96
             
             _q_10_loss = []
             _q_50_loss = []
@@ -56,11 +62,11 @@ if __name__ == "__main__":
             _rmse_loss = []
             pipline = chronos_prediction()
             
-            for i in tqdm(range(1)): # x.shape[0]
-                for j in range(1):  # x.shape[1]
+            for i in tqdm(x.shape[0]): # 1
+                for j in range(x.shape[1]):  # 1
                     _input = x[i, j, :]
                     _output = y[i, j, :].numpy()
-                    forecast = pipline.predict(_input, 64)
+                    forecast = pipline.predict(_input, pred_length, limit_prediction_length=False)
                     low, median, high = np.quantile(forecast[0].numpy(), [0.1, 0.5, 0.9], axis=0)
                     _q_10 = evm.quantile_loss(low, _output, 0.1).mean()
                     _q_50 = evm.quantile_loss(median, _output, 0.5).mean()
