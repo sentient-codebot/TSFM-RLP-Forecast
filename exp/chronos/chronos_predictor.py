@@ -52,41 +52,47 @@ if __name__ == "__main__":
             _q_10_loss = []
             _q_50_loss = []
             _q_90_loss = []
-            _mse_loss = []
+            _mae_loss = []
+            _rmse_loss = []
             pipline = chronos_prediction()
             
-            for i in tqdm(range(x.shape[0])):
+            for i in tqdm(range(1)): # x.shape[0]
                 for j in range(1):  # x.shape[1]
                     _input = x[i, j, :]
-                    _output = y[i, j, :]  
+                    _output = y[i, j, :].numpy()
                     forecast = pipline.predict(_input, 64)
                     low, median, high = np.quantile(forecast[0].numpy(), [0.1, 0.5, 0.9], axis=0)
                     _q_10 = evm.quantile_loss(low, _output, 0.1).mean()
                     _q_50 = evm.quantile_loss(median, _output, 0.5).mean()
                     _q_90 = evm.quantile_loss(high, _output, 0.9).mean()
-                    _mse = ((_output- median)**2).mean()
+                    _mae = evm.mae(median, _output)
+                    _rmse = evm.rmse(median, _output)
                     _q_10_loss.append(_q_10.item())
                     _q_50_loss.append(_q_50.item())
                     _q_90_loss.append(_q_90.item())
-                    _mse_loss.append(_mse.item())
+                    _mae_loss.append(_mae.item())
+                    _rmse_loss.append(_rmse.item())
                     
             # cancel nan values in the list
             _q_10_loss = [x for x in _q_10_loss if str(x) != 'nan']
             _q_50_loss = [x for x in _q_50_loss if str(x) != 'nan']
             _q_90_loss = [x for x in _q_90_loss if str(x) != 'nan']
-            _mse_loss = [x for x in _mse_loss if str(x) != 'nan']
+            _mae_loss = [x for x in _mae_loss if str(x) != 'nan']
+            _rmse_loss = [x for x in _rmse_loss if str(x) != 'nan']
             
             # compute the mean of the loss
             q_10_loss = np.mean(_q_10_loss)
             q_50_loss = np.mean(_q_50_loss)
             q_90_loss = np.mean(_q_90_loss)
-            mse_loss = np.mean(_mse_loss)
+            mae_loss = np.mean(_mae_loss)
+            rmse_loss = np.mean(_rmse_loss)
             
             print(f"reso: {reso}, country: {country}, type: {_type}")
             print(f"q_10_loss: {q_10_loss}")
             print(f"q_50_loss: {q_50_loss}")
             print(f"q_90_loss: {q_90_loss}")
-            print(f"mse_loss: {mse_loss}")
+            print(f"mae_loss: {mae_loss}")
+            print(f"rmse_loss: {rmse_loss}")
             
             # plot the prediction
             plt.figure(figsize=(10, 6))
