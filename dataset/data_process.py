@@ -144,13 +144,13 @@ class PairMaker:
     def __init__(self, 
                  window_length: int = 100, # the length of the window
                  num_pairs: int = 50, # the number of pairs to generate
-                 window_split_rato: float = 0.5, # the ratio of the window to split
+                 window_split_ratio: float = 0.5, # the ratio of the window to split
                  random_state: int = 42):
         
         self.window_length = window_length
         self.num_pairs = num_pairs
         self.random_state = random_state
-        self.window_split_ratio = window_split_rato
+        self.window_split_ratio = window_split_ratio
         
     def _check_input(self):
         if self.window_length < 1:
@@ -184,31 +184,37 @@ class PairMaker:
         data = data['target']
         for i in range(self.num_pairs):
             if type_of_split == 'overlap':
-                if data.shape[0] < self.window_length+self.num_pairs+1:
-                    raise ValueError("The length of the data is not enough for the window length and number of pairs")
-                window1 = data.iloc[start:start+ int(self.window_length*self.window_split_ratio)]
-                window2 = data.iloc[start+ int(self.window_length*self.window_split_ratio):start+self.window_length]
-                start += 1
-                pairs.append((window1, window2))
+                # if data.shape[0] < self.window_length+self.num_pairs+1:
+                #     raise ValueError("The length of the data is not enough for the window length and number of pairs")
+                try:
+                    window1 = data.iloc[start:start+ int(self.window_length*self.window_split_ratio)]
+                    window2 = data.iloc[start+ int(self.window_length*self.window_split_ratio):start+self.window_length]
+                    start += 1
+                    pairs.append((np.array(window1), np.array(window2)))
+                except IndexError:
+                    break
             if type_of_split == 'noverlap':
-                if data.shape[0] < self.window_length*self.num_pairs+1:
-                    raise ValueError("The length of the data is not enough for the window length and number of pairs")
-                window1 = data.iloc[start:start+ int(self.window_length*self.window_split_ratio)]
-                window2 = data.iloc[start+int(self.window_length*self.window_split_ratio):start+self.window_length]
-                start += self.window_length
-                pairs.append((window1, window2))
+                # if data.shape[0] < self.window_length*self.num_pairs+1:
+                #     raise ValueError("The length of the data is not enough for the window length and number of pairs")
+                try:
+                    window1 = data.iloc[start:start+ int(self.window_length*self.window_split_ratio)]
+                    window2 = data.iloc[start+int(self.window_length*self.window_split_ratio):start+self.window_length]
+                    start += self.window_length
+                    pairs.append((np.array(window1), np.array(window2)))
+                except IndexError:
+                    break
         
         # change the pairs to two np.array X and y
-        X = []
-        y = []
-        for pair in pairs:
-            X.append(pair[0].values)
-            y.append(pair[1].values)
+        # X = []
+        # y = []
+        # for pair in pairs:
+        #     X.append(pair[0].values)
+        #     y.append(pair[1].values)
         
-        X = np.array(X)
-        y = np.array(y)
+        # X = np.array(X)
+        # y = np.array(y)
         
-        return X, y
+        return pairs
 
 if __name__ == "__main__":
     # Check the class
@@ -225,7 +231,7 @@ if __name__ == "__main__":
     pair_maker = PairMaker(
         window_length=20,
         num_pairs=50,
-        window_split_rato=0.5,
+        window_split_ratio=0.5,
         random_state=42
     )
     
