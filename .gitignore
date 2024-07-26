@@ -3,3 +3,4 @@
 data/
 data
 lightning_logs/
+exp/chronos/lightning_logs/
