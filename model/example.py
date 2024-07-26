@@ -16,7 +16,7 @@ import numpy as np
 from numpy import ndarray
 from einops import rearrange
 from einops.layers.torch import Rearrange
-
+from typing import Callable, Optional
 import gluonts as ts
 from gluonts.core.component import validated
 from gluonts.dataset.field_names import FieldName
@@ -50,7 +50,7 @@ class GluonTSNetwork(ABC, nn.Module):
     pass
 
 class MLPModel(nn.Module):
-    def __init__(self, input_dim: int, output_dim: int, hidden_dim: int = 50, make_output_head: Callable|None = None):
+    def __init__(self, input_dim: int, output_dim: int, hidden_dim: int = 50, make_output_head: Optional[Callable] = None):
         super().__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
@@ -142,7 +142,7 @@ class TrainerOutput:
     epoch_loss: float
     
 class ExampleTrainer():
-    def __init__(self, lr: float, epochs: int, device: torch.device|None = None):
+    def __init__(self, lr: float, epochs: int, device: Optional[torch.device] = None):
         self.lr = lr
         self.epochs = epochs
         self.device = device or torch.device('cuda' if torch.cuda.is_available() else 'cpu')
