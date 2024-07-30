@@ -1,5 +1,26 @@
+from dataclasses import dataclass
+from typing import Sequence, Dict
+
 import numpy as np
 
+from utility.configuration import BaseConfig
+
+@dataclass
+class EvaluationMetrics(BaseConfig):
+    quantile_loss: Dict[str, float]|None = None
+    mae: float|None = None
+    mse: float|None = None
+    rmse: float|None = None
+    
+    def __post_init__(self):
+        if self.quantile_loss is None:
+            self.quantile_loss = {}
+        if self.mae is None:
+            self.mae = -1.0
+        if self.mse is None:
+            self.mse = -1.0
+        if self.rmse is None:
+            self.rmse = -1.0
 
 def quantile_loss(pre_values_q, real_values, q):
     """

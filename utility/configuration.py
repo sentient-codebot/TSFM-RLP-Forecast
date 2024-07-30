@@ -4,8 +4,22 @@ import os
 from abc import abstractmethod
 from functools import partial
 from argparse import ArgumentParser, Namespace
-from typing import Union
+from typing import Union, Any
 import yaml
+from datetime import datetime
+import random
+
+import pandas as pd
+
+def flatten_dict(dict_obj, parent_key='', sep=''):
+    out_dict = {}
+    for key, value in dict_obj.items():
+        if isinstance(value, dict):
+            value = flatten_dict(value, parent_key + sep + key, sep='_')
+            out_dict.update(value)
+        else:
+            out_dict[parent_key + sep + key] = value
+    return out_dict
 
 @dataclass
 class BaseConfig:
@@ -60,43 +74,46 @@ class BaseConfig:
         return _obj
     
     def to_yaml(self, path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'w') as f:
             yaml.safe_dump(self.to_dict(), f)
+            
+    def append_csv(self, path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        if os.path.exists(path):
+            pd.DataFrame([flatten_dict(self.to_dict())]).to_csv(path, mode='a', header=False, index=False)
+        else:
+            pd.DataFrame([flatten_dict(self.to_dict())]).to_csv(path, index=False)
+            
+    def to_csv(self, path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        pd.DataFrame([flatten_dict(self.to_dict())]).to_csv(path, index=False)
         
 @dataclass
 class DataConfig(BaseConfig):
-    dataset: str
-    root: str
-    # resolution: str
-    # load: bool
-    # normalize: bool
-    
-@dataclass
-class ExampleDataConfig(DataConfig):
-    # param_only_for_this_dataset: str
-    pass
+    country: str
+    aggregation_type: str
+    resolution: str
+    note: str = ""
         
 @dataclass
 class ModelConfig(BaseConfig):
-    model_class: str = 'example' # e.g., lag-llama, chronos
-    prediction_length: int = 24
-    # some_common_model_settings: str
-    
-@dataclass
-class ExampleModelConfig(ModelConfig):
-    hidden_dim: int = 6
-    past_length: int = 48
+    model_name: str
+    lookback_window: int
+    prediction_length: int
     
 @dataclass
 class ExperimentConfig(BaseConfig):
     exp_id: str
     data: DataConfig
     model: ModelConfig
+    result: Any = ''
     # log_wandb: bool = False
     
     subconfigs = {
         'data': DataConfig,
         'model': ModelConfig,
+        'result': Any,
     }
     
     @classmethod
@@ -104,21 +121,18 @@ class ExperimentConfig(BaseConfig):
         if subconfig_name not in cls.subconfigs:
             return subconfig_dict
         if subconfig_name == 'data':
-            if subconfig_dict['dataset'] == 'example':
-                return ExampleDataConfig.from_dict(subconfig_dict)
-            else:
-                return DataConfig.from_dict(subconfig_dict)
+            return DataConfig.from_dict(subconfig_dict)
         if subconfig_name == 'model':
-            if subconfig_dict['model_class'] == 'example_model':
-                return ExampleModelConfig.from_dict(subconfig_dict)
-            else:
-                return ModelConfig.from_dict(subconfig_dict)
+            return ModelConfig.from_dict(subconfig_dict)
+            
+def generate_time_id():
+    return datetime.now().strftime("%Y%m%d" + "-" + f"{random.randint(0, 9999):04d}")
     
 if __name__ == "__main__":
-    model_config = ModelConfig.from_yaml("model_config.yaml")
-    data_config = DataConfig(dataset="example", root="root")
+    model_config = ModelConfig(model_name="chronos-t5-tiny", lookback_window=72, prediction_length=24)
+    data_config = DataConfig(country="nl", aggregation_type="ind", resolution="60m")
     
-    exp_config = ExperimentConfig(exp_id=1,
+    exp_config = ExperimentConfig(exp_id=generate_time_id(),
                                     model=model_config,
                                     data=data_config)
     print(exp_config.model)
