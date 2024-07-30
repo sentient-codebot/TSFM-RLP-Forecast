@@ -13,6 +13,7 @@ from chronos import ChronosPipeline
 
 import dataset.data_loader as dl
 import exp.eva_metrics as evm
+import utility.configuration as cf
 
 
 def chronos_prediction(
@@ -40,6 +41,9 @@ if __name__ == "__main__":
             ('60m', 'uk'),
         ]
     
+    # -------- Experiment Configuration --------
+    exp_id = cf.generate_time_id()
+    
     for reso, country in reso_country:
         for _type in ['ind', 'agg']:
             print('--------------------------------------------------')
@@ -50,7 +54,9 @@ if __name__ == "__main__":
                 resolution = reso,
                 country = country,
                 data_type = _type,
+                window_split_ratio = 0.75, # TODO 有点混乱
             )
+            pair_iterable.total_pairs = 10
             pair_it = dl.array_to_tensor(iter(pair_iterable))
             if reso == '60m':
                 pred_length = 24
@@ -58,6 +64,18 @@ if __name__ == "__main__":
                 pred_length = 48
             elif reso == '15m':
                 pred_length = 96
+            # ----------------- Experiment Configuration -----------------
+            data_config = cf.DataConfig(
+                country=country,
+                resolution=reso,
+                aggregation_type=_type,
+            )
+            foo = next(iter(pair_iterable))
+            model_config = cf.ModelConfig(
+                model_name="chronos-t5-tiny",
+                lookback_window=foo[0].shape[-1],
+                prediction_length=foo[1].shape[-1],
+            )
             
             _q_10_loss = []
             _q_50_loss = []
@@ -96,12 +114,30 @@ if __name__ == "__main__":
             mae_loss = np.mean(_mae_loss)
             rmse_loss = np.mean(_rmse_loss)
             
+            eval_metrics = evm.EvaluationMetrics(
+                quantile_loss={
+                    '0.1': q_10_loss,
+                    '0.5': q_50_loss,
+                    '0.9': q_90_loss,
+                },
+                mae=mae_loss,
+                rmse=rmse_loss,
+            )
+            
             print(f"reso: {reso}, country: {country}, type: {_type}")
             print(f"q_10_loss: {q_10_loss}")
             print(f"q_50_loss: {q_50_loss}")
             print(f"q_90_loss: {q_90_loss}")
             print(f"mae_loss: {mae_loss}")
             print(f"rmse_loss: {rmse_loss}")
+            
+            exp_config = cf.ExperimentConfig(
+                exp_id=exp_id,
+                data=data_config,
+                model=model_config,
+                result=eval_metrics,
+            )
+            exp_config.append_csv(f'result/{exp_id}.csv')
             
             # plot the prediction
             plt.figure(figsize=(10, 6))
@@ -116,6 +152,6 @@ if __name__ == "__main__":
                 label='uncertainty',
             )
             plt.legend()
-            plt.show()
+            # plt.show()
             
             
