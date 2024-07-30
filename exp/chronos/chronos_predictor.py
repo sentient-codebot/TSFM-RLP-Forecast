@@ -56,7 +56,7 @@ if __name__ == "__main__":
                 data_type = _type,
                 window_split_ratio = 0.75, # TODO 有点混乱
             )
-            pair_iterable.total_pairs = 10
+            # pair_iterable.total_pairs = 10 # NOTE only for debug
             pair_it = dl.array_to_tensor(iter(pair_iterable))
             if reso == '60m':
                 pred_length = 24
