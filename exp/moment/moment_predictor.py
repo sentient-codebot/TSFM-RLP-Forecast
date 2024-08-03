@@ -88,7 +88,7 @@ if __name__ == "__main__":
             _input = torch.stack(_input)[:100,:]
             
             # Repeat the last dimension to 512
-            _input = _input.repeat(1, 512//_input.shape[-1]+1)[:,:512]
+            _input = _input.repeat(1, 512//_input.shape[-1]+1)[:,-512:]
             _input = _input + torch.randn_like(_input)*1e-5
             _output = np.stack(_output)[:100,:] 
             
