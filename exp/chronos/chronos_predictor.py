@@ -13,6 +13,7 @@ from chronos import ChronosPipeline
 
 import dataset.data_loader as dl
 import exp.eva_metrics as evm
+import utility.configuration as cf
 
 
 def chronos_prediction(
@@ -40,79 +41,86 @@ if __name__ == "__main__":
             ('60m', 'uk'),
         ]
     
+    # -------- Experiment Configuration --------
+    exp_id = cf.generate_time_id()
+    
     for reso, country in reso_country:
         for _type in ['ind', 'agg']:
+            print('--------------------------------------------------')
+            print(f"reso: {reso}, country: {country}, type: {_type}")
+            print('--------------------------------------------------')
             # load datastet
-            x, y = dl.data_for_exp(
+            pair_iterable = dl.data_for_exp(
                 resolution = reso,
                 country = country,
                 data_type = _type,
+                window_split_ratio = 0.75, # TODO 有点混乱
             )
+            # pair_iterable.total_pairs = 10 # NOTE only for debug
+            pair_it = dl.array_to_tensor(iter(pair_iterable))
             if reso == '60m':
                 pred_length = 24
             elif reso == '30m':
                 pred_length = 48
             elif reso == '15m':
                 pred_length = 96
+            # ----------------- Experiment Configuration -----------------
+            data_config = cf.DataConfig(
+                country=country,
+                resolution=reso,
+                aggregation_type=_type,
+            )
+            foo = next(iter(pair_iterable))
+            model_config = cf.ModelConfig(
+                model_name="chronos-t5-tiny",
+                lookback_window=foo[0].shape[-1],
+                prediction_length=foo[1].shape[-1],
+            )
             
-            _q_10_loss = []
-            _q_50_loss = []
-            _q_90_loss = []
-            _mae_loss = []
-            _rmse_loss = []
             pipeline = chronos_prediction()
             
-            for i in tqdm(x.shape[0]): # 1
-                for j in range(x.shape[2]):  # 1
-                    _input = x[i, j, :]
-                    _output = y[i, j, :].numpy()
-                    forecast = pipeline.predict(_input, pred_length, limit_prediction_length=False)
-                    low, median, high = np.quantile(forecast[0].numpy(), [0.1, 0.5, 0.9], axis=0)
-                    _q_10 = evm.quantile_loss(low, _output, 0.1).mean()
-                    _q_50 = evm.quantile_loss(median, _output, 0.5).mean()
-                    _q_90 = evm.quantile_loss(high, _output, 0.9).mean()
-                    _mae = evm.mae(median, _output)
-                    _rmse = evm.rmse(median, _output)
-                    _q_10_loss.append(_q_10.item())
-                    _q_50_loss.append(_q_50.item())
-                    _q_90_loss.append(_q_90.item())
-                    _mae_loss.append(_mae.item())
-                    _rmse_loss.append(_rmse.item())
+            _input = []
+            _output = []
+            for x, y in tqdm(pair_it, total=len(pair_iterable)):
+                _input.append(x)
+                _output.append(y.numpy())
+            _input = torch.stack(_input)[:100,:]
+            _output = np.stack(_output)[:100,:]               
+            forecast = pipeline.predict(_input, pred_length, limit_prediction_length=False)
+            print(forecast.shape)
+            low, median, high = np.quantile(forecast.numpy(), [0.1, 0.5, 0.9], axis=1)
+            print(low.shape, median.shape, high.shape)
+
+            _q_10 = evm.quantile_loss(low, _output, 0.1).mean()
+            _q_50 = evm.quantile_loss(median, _output, 0.5).mean()
+            _q_90 = evm.quantile_loss(high, _output, 0.9).mean()
+            _mae = evm.mae(median, _output)
+            _rmse = evm.rmse(median, _output)
                     
-            # cancel nan values in the list
-            _q_10_loss = [x for x in _q_10_loss if str(x) != 'nan']
-            _q_50_loss = [x for x in _q_50_loss if str(x) != 'nan']
-            _q_90_loss = [x for x in _q_90_loss if str(x) != 'nan']
-            _mae_loss = [x for x in _mae_loss if str(x) != 'nan']
-            _rmse_loss = [x for x in _rmse_loss if str(x) != 'nan']
-            
-            # compute the mean of the loss
-            q_10_loss = np.mean(_q_10_loss)
-            q_50_loss = np.mean(_q_50_loss)
-            q_90_loss = np.mean(_q_90_loss)
-            mae_loss = np.mean(_mae_loss)
-            rmse_loss = np.mean(_rmse_loss)
+            eval_metrics = evm.EvaluationMetrics(
+                quantile_loss={
+                    '0.1': _q_10,
+                    '0.5': _q_50,
+                    '0.9': _q_90,
+                },
+                mae=_mae,
+                rmse=_rmse,
+            )
             
             print(f"reso: {reso}, country: {country}, type: {_type}")
-            print(f"q_10_loss: {q_10_loss}")
-            print(f"q_50_loss: {q_50_loss}")
-            print(f"q_90_loss: {q_90_loss}")
-            print(f"mae_loss: {mae_loss}")
-            print(f"rmse_loss: {rmse_loss}")
+            print(f"q_10_loss: {_q_10}")
+            print(f"q_50_loss: {_q_50}")
+            print(f"q_90_loss: {_q_90}")
+            print(f"mae_loss: {_mae}")
+            print(f"rmse_loss: {_rmse}")
             
-            # plot the prediction
-            plt.figure(figsize=(10, 6))
-            plt.plot(_output, label='real')
-            plt.plot(median, label='prediction')
-            plt.fill_between(
-                np.arange(len(median)),
-                low,
-                high,
-                alpha=0.3,
-                color='red',
-                label='uncertainty',
+            exp_config = cf.ExperimentConfig(
+                exp_id=exp_id,
+                data=data_config,
+                model=model_config,
+                result=eval_metrics,
             )
-            plt.legend()
-            plt.show()
+            exp_config.append_csv(f'result/{exp_id}.csv')
             
+        
             

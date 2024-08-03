@@ -4,6 +4,19 @@ This project aims to compare the zero-shot forecast performance of Time Series F
 
 This is the official repository of paper: [Link to paper](). 
 
+## Logging Result Procedure
+
+Example: *exp/chronos/chronos_predictor.py*
+
+1. import `utility.configuration` (as `cf`) and `exp.eva_metrics` (as `evm`) modules.
+2. generate a unique `exp_id` for each run. `exp_id=cf.generate_time_id()`
+3. for each sub-run (e.g. with different country, resolution.)
+   1. log data configuration `data_config=cf.DataConfig(country='nl',...)`
+   2. log model configuration `model_config=cf.ModelConfig(model='chronos',...)`
+   3. log evaluation results `eval_metrics=evm.EvaluationMetrics(...)`
+   4. integrate into `exp_config=cf.ExperimentConfig(exp_id=exp_id, data=data_config, model=model_config, eval_metrics=eval_metrics)`
+   5. save to .csv `exp_config.append_csv(f'result/{exp_id}.csv')`
+
 ## Structure
 
 ### File Structure

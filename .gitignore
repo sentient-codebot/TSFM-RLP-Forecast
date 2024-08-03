@@ -2,3 +2,7 @@
 .vscode
 data/
 data
+lightning_logs/
+exp/chronos/lightning_logs/
+.DS_Store
+result/

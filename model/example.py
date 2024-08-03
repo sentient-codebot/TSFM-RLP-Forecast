@@ -216,7 +216,7 @@ class ExampleEstimator():
             time_series_fields=[FieldName.OBSERVED_VALUES],
         )
         dataloader = TrainDataLoader(
-            Cached(dataset.train),
+            Cached(dataset),
             batch_size=batch_size,
             stack_fn=batchify,
             transform=mask_unobserved + training_splitter,
