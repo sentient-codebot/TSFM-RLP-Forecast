@@ -1,5 +1,7 @@
 import os 
 import sys
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(parent_dir)
 
 import torch
 import numpy as np
@@ -7,9 +9,6 @@ import pandas as pd
 from tqdm import tqdm
 
 import dataset.data_process as dp
-
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(parent_dir)
 
 class PairIterable:
     def __init__(
@@ -296,11 +295,11 @@ def data_for_exp(
 
                         
 if __name__ == "__main__":
-    x, y = data_for_exp(
+    pair_it = data_for_exp(
         resolution ='15m',
         country = 'ge',
         data_type = 'agg',
     )
+    print('Length:', pair_it.__len__())
+    x, y = next(iter(pair_it))
     print(x.shape, y.shape)
-
-                 
