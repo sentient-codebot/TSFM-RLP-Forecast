@@ -60,13 +60,13 @@ if __name__ == "__main__":
             _q_90_loss = []
             _mae_loss = []
             _rmse_loss = []
-            pipline = chronos_prediction()
+            pipeline = chronos_prediction()
             
             for i in tqdm(x.shape[0]): # 1
-                for j in range(x.shape[1]):  # 1
+                for j in range(x.shape[2]):  # 1
                     _input = x[i, j, :]
                     _output = y[i, j, :].numpy()
-                    forecast = pipline.predict(_input, pred_length, limit_prediction_length=False)
+                    forecast = pipeline.predict(_input, pred_length, limit_prediction_length=False)
                     low, median, high = np.quantile(forecast[0].numpy(), [0.1, 0.5, 0.9], axis=0)
                     _q_10 = evm.quantile_loss(low, _output, 0.1).mean()
                     _q_50 = evm.quantile_loss(median, _output, 0.5).mean()
