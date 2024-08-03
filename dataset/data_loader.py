@@ -295,6 +295,17 @@ def data_for_exp(
 
                         
 if __name__ == "__main__":
+    
+    #    reso_country = [
+    #         ('60m', 'nl'),
+    #         ('60m', 'ge'),
+    #         ('30m', 'ge'),
+    #         ('15m', 'ge'),
+    #         ('30m', 'uk'),
+    #         ('60m', 'uk'),
+    #     ]
+    
+    # data type ind, agg
     pair_it = data_for_exp(
         resolution ='15m',
         country = 'ge',
