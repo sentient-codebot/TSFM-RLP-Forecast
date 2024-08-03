@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Sequence, Dict
+from typing import Sequence, Dict, Union
 
 import numpy as np
 
@@ -7,10 +7,11 @@ from utility.configuration import BaseConfig
 
 @dataclass
 class EvaluationMetrics(BaseConfig):
-    quantile_loss: Dict[str, float]|None = None
-    mae: float|None = None
-    mse: float|None = None
-    rmse: float|None = None
+    quantile_loss: Union[Dict[str, float], None] = None
+    mae: Union[float, None] = None
+    mse: Union[float, None] = None
+    rmse: Union[float, None] = None
+
     
     def __post_init__(self):
         if self.quantile_loss is None:

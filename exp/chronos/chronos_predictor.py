@@ -77,59 +77,42 @@ if __name__ == "__main__":
                 prediction_length=foo[1].shape[-1],
             )
             
-            _q_10_loss = []
-            _q_50_loss = []
-            _q_90_loss = []
-            _mae_loss = []
-            _rmse_loss = []
             pipeline = chronos_prediction()
             
+            _input = []
+            _output = []
             for x, y in tqdm(pair_it, total=len(pair_iterable)):
-                    _input = x
-                    _output = y.numpy()
-                    forecast = pipeline.predict(_input, pred_length, limit_prediction_length=False)
-                    low, median, high = np.quantile(forecast[0].numpy(), [0.1, 0.5, 0.9], axis=0)
-                    _q_10 = evm.quantile_loss(low, _output, 0.1).mean()
-                    _q_50 = evm.quantile_loss(median, _output, 0.5).mean()
-                    _q_90 = evm.quantile_loss(high, _output, 0.9).mean()
-                    _mae = evm.mae(median, _output)
-                    _rmse = evm.rmse(median, _output)
-                    _q_10_loss.append(_q_10.item())
-                    _q_50_loss.append(_q_50.item())
-                    _q_90_loss.append(_q_90.item())
-                    _mae_loss.append(_mae.item())
-                    _rmse_loss.append(_rmse.item())
+                _input.append(x)
+                _output.append(y.numpy())
+            _input = torch.stack(_input)[:100,:]
+            _output = np.stack(_output)[:100,:]               
+            forecast = pipeline.predict(_input, pred_length, limit_prediction_length=False)
+            print(forecast.shape)
+            low, median, high = np.quantile(forecast.numpy(), [0.1, 0.5, 0.9], axis=1)
+            print(low.shape, median.shape, high.shape)
+
+            _q_10 = evm.quantile_loss(low, _output, 0.1).mean()
+            _q_50 = evm.quantile_loss(median, _output, 0.5).mean()
+            _q_90 = evm.quantile_loss(high, _output, 0.9).mean()
+            _mae = evm.mae(median, _output)
+            _rmse = evm.rmse(median, _output)
                     
-            # cancel nan values in the list
-            _q_10_loss = [x for x in _q_10_loss if str(x) != 'nan']
-            _q_50_loss = [x for x in _q_50_loss if str(x) != 'nan']
-            _q_90_loss = [x for x in _q_90_loss if str(x) != 'nan']
-            _mae_loss = [x for x in _mae_loss if str(x) != 'nan']
-            _rmse_loss = [x for x in _rmse_loss if str(x) != 'nan']
-            
-            # compute the mean of the loss
-            q_10_loss = np.mean(_q_10_loss)
-            q_50_loss = np.mean(_q_50_loss)
-            q_90_loss = np.mean(_q_90_loss)
-            mae_loss = np.mean(_mae_loss)
-            rmse_loss = np.mean(_rmse_loss)
-            
             eval_metrics = evm.EvaluationMetrics(
                 quantile_loss={
-                    '0.1': q_10_loss,
-                    '0.5': q_50_loss,
-                    '0.9': q_90_loss,
+                    '0.1': _q_10,
+                    '0.5': _q_50,
+                    '0.9': _q_90,
                 },
-                mae=mae_loss,
-                rmse=rmse_loss,
+                mae=_mae,
+                rmse=_rmse,
             )
             
             print(f"reso: {reso}, country: {country}, type: {_type}")
-            print(f"q_10_loss: {q_10_loss}")
-            print(f"q_50_loss: {q_50_loss}")
-            print(f"q_90_loss: {q_90_loss}")
-            print(f"mae_loss: {mae_loss}")
-            print(f"rmse_loss: {rmse_loss}")
+            print(f"q_10_loss: {_q_10}")
+            print(f"q_50_loss: {_q_50}")
+            print(f"q_90_loss: {_q_90}")
+            print(f"mae_loss: {_mae}")
+            print(f"rmse_loss: {_rmse}")
             
             exp_config = cf.ExperimentConfig(
                 exp_id=exp_id,
@@ -139,19 +122,5 @@ if __name__ == "__main__":
             )
             exp_config.append_csv(f'result/{exp_id}.csv')
             
-            # plot the prediction
-            plt.figure(figsize=(10, 6))
-            plt.plot(_output, label='real')
-            plt.plot(median, label='prediction')
-            plt.fill_between(
-                np.arange(len(median)),
-                low,
-                high,
-                alpha=0.3,
-                color='red',
-                label='uncertainty',
-            )
-            plt.legend()
-            # plt.show()
-            
+        
             
