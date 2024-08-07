@@ -89,9 +89,10 @@ def data_for_exp(
         country: str = 'nl',
         data_type: str = 'ind',
         prediction_length: int = 24,
-        window_split_ratio: float = 0.75,
+        window_split_ratio: float = 0.75, 
         random_state: int = 42
     ):
+        raise NotImplementedError("window_split_ratio -> int")
         loader = dp.LoadDataset(
                 resolution=resolution,
                 country=country,
