@@ -84,7 +84,7 @@ def create_pd_dataset(data, freq):
     """
     num_units, num_intervals = data.shape
     #TODO: remove this later, just for testing
-    num_units = 3
+    # num_units = 3
 
     df_list = []
 
@@ -130,7 +130,6 @@ def generate_dataset(pair_it, total, freq): #TODO: remove total later
     # lag-llama need to include the timesteps in the dataframe that we want to perform prediction
     # so we fill the timesteps with dummy values(0)
     combined = np.hstack((_input, np.zeros_like(_output)))
-    print(combined.shape)
     _input = create_pd_dataset(combined, freq)
 
     # fill nan with 0
@@ -193,17 +192,44 @@ if __name__ == "__main__":
             # make prediction
             forecasts, tss = predict(_input, pred_length)
 
-            print(_output.shape)
             print(len(forecasts))
+            print(forecasts[0].samples)
             print(forecasts[0].samples.shape)
+            stacked_forecasts = np.vstack([forecast.samples for forecast in forecasts])
 
-            plt.figure()
+            _mae = evm.mae(stacked_forecasts, _output)
+            _rmse = evm.rmse(stacked_forecasts, _output)
+
+            eval_metrics = evm.EvaluationMetrics(
+                quantile_loss={
+                    '0.1': 0,
+                    '0.5': 0,
+                    '0.9': 0,
+                },
+                mae=_mae,
+                rmse=_rmse,
+            )
+
+            print(f"reso: {reso}, country: {country}, type: {_type}")
+            print(f"mae_loss: {_mae}")
+            print(f"rmse_loss: {_rmse}")
+
+            exp_config = cf.ExperimentConfig(
+                exp_id=exp_id,
+                data=data_config,
+                model=model_config,
+                result=eval_metrics,
+            )
+            exp_config.append_csv(f'result/{exp_id}.csv')
+
+            # Plot first 9 units' predictions
+            plt.figure(figsize=(20, 15))
             date_formater = mdates.DateFormatter('%b, %d')
             plt.rcParams.update({'font.size': 15})
 
             # Iterate through the first 9 series, and plot the predicted samples
-            for idx, (forecast, ts) in islice(enumerate(zip(forecasts, tss)), 3):
-                ax = plt.subplot(3, 1, idx+1)
+            for idx, (forecast, ts) in islice(enumerate(zip(forecasts, tss)), 9):
+                ax = plt.subplot(3, 3, idx+1)
                 plt.plot(ts[-5 * pred_length:].to_timestamp(), label="target", )
                 forecast.plot( color='g')
                 plt.xticks(rotation=60)
