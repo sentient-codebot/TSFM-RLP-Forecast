@@ -26,7 +26,7 @@ print(ckpt_path)
 print('--------------------------------------------------')
 print(LagLlamaEstimator)
 
-def predict(dataset, prediction_length: int, context_length=32, use_rope_scaling=False, num_samples=1):
+def predict(dataset, prediction_length: int, context_length=32, use_rope_scaling=False, num_samples=100):
     """A function for Lag-Llama inference.
     Copy from https://colab.research.google.com/drive/1XxrLW9VGPlZDw3efTvUi0hQimgJOwQG6#scrollTo=gyH5Xq9eSvzq&line=1&uniqifier=1
     """
@@ -84,7 +84,7 @@ def create_pd_dataset(data, freq):
     """
     num_units, num_intervals = data.shape
     #TODO: remove this later, just for testing
-    # num_units = 3
+    num_units = 9
 
     df_list = []
 
@@ -118,7 +118,7 @@ def generate_dataset(pair_it, total, freq): #TODO: remove total later
         freq (str): The frequency of the data.
 
     Returns:
-        tuple: A tuple containing the input dataset and the output dataset.
+        tuple: A tuple containing the PandasDataset dataset, original dataset, and output.
     """
     _input = []
     _output = []
@@ -128,14 +128,16 @@ def generate_dataset(pair_it, total, freq): #TODO: remove total later
     _input = np.stack(_input)
     _output = np.stack(_output)
     # lag-llama need to include the timesteps in the dataframe that we want to perform prediction
-    # so we fill the timesteps with dummy values(0)
+    # so we fill the timesteps with dummy values
     combined = np.hstack((_input, np.zeros_like(_output)))
-    _input = create_pd_dataset(combined, freq)
+    input_dataset = create_pd_dataset(combined, freq)
 
     # fill nan with 0
     _output = np.nan_to_num(_output)
 
-    return _input, _output
+    #TODO: remove this later, just for testing
+    _output = _output[:9]
+    return input_dataset, _input, _output
 
 if __name__ == "__main__":
     reso_country = [
@@ -187,15 +189,14 @@ if __name__ == "__main__":
             )
 
             # start the data
-            _input, _output = generate_dataset(pair_it, len(pair_iterable), freq)
+            input_dataset, _, _output = generate_dataset(pair_it, len(pair_iterable), freq)
 
             # make prediction
-            forecasts, tss = predict(_input, pred_length)
+            forecasts, tss = predict(input_dataset, pred_length)
 
             print(len(forecasts))
-            print(forecasts[0].samples)
             print(forecasts[0].samples.shape)
-            stacked_forecasts = np.vstack([forecast.samples for forecast in forecasts])
+            stacked_forecasts = np.vstack([forecast.median for forecast in forecasts])
 
             _mae = evm.mae(stacked_forecasts, _output)
             _rmse = evm.rmse(stacked_forecasts, _output)
@@ -230,7 +231,10 @@ if __name__ == "__main__":
             # Iterate through the first 9 series, and plot the predicted samples
             for idx, (forecast, ts) in islice(enumerate(zip(forecasts, tss)), 9):
                 ax = plt.subplot(3, 3, idx+1)
-                plt.plot(ts[-5 * pred_length:].to_timestamp(), label="target", )
+                peroid_idx = forecast.index
+                output = pd.Series(_output[idx], index=peroid_idx)
+                plt.plot(ts[0:-pred_length].to_timestamp(), label="previous")
+                plt.plot(output.to_timestamp(), label="target")
                 forecast.plot( color='g')
                 plt.xticks(rotation=60)
                 ax.xaxis.set_major_formatter(date_formater)
