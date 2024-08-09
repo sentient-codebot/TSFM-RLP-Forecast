@@ -22,9 +22,6 @@ import utility.configuration as cf
 from lag_llama.gluon.estimator import LagLlamaEstimator
 
 ckpt_path = os.path.abspath(os.path.join(parent_dir, './lag-llama', './lag-llama.ckpt'))
-print(ckpt_path)
-print('--------------------------------------------------')
-print(LagLlamaEstimator)
 
 debug = os.getenv('DEBUG', 'False') == 'True'
 __DEBUG_NUM_UNITS__ = 3
@@ -34,7 +31,7 @@ def predict(dataset, prediction_length: int, context_length=32, use_rope_scaling
     Copy from https://colab.research.google.com/drive/1XxrLW9VGPlZDw3efTvUi0hQimgJOwQG6#scrollTo=gyH5Xq9eSvzq&line=1&uniqifier=1
     """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    ckpt = torch.load(ckpt_path, map_location=device) # Uses GPU since in this Colab we use a GPU.
+    ckpt = torch.load(ckpt_path, map_location=device)
     estimator_args = ckpt["hyper_parameters"]["model_kwargs"]
 
     rope_scaling_arguments = {
@@ -125,8 +122,8 @@ def generate_dataset(pair_it, total, freq): #TODO: remove total later
     _output = np.stack(_output)
     # lag-llama need to include the timesteps in the dataframe that we want to perform prediction
     # so we fill the timesteps with dummy values
-    # combined = np.hstack((_input, _output))
     combined = np.hstack((_input, np.zeros_like(_output)))
+    # combined = np.hstack((_input, _output)) # test the impact of including the target instead of zeros
     input_dataset = create_pd_dataset(combined, freq)
 
     # fill nan with 0
@@ -193,6 +190,7 @@ if __name__ == "__main__":
             forecasts, tss = predict(input_dataset, pred_length)
 
             print(len(forecasts))
+            # we can get median by `forecasts[i].median` as well
             forecast_quantiles = np.array([np.quantile(forecast.samples, [0.1, 0.5, 0.9], axis=0)for forecast in forecasts])
             low, median, high = forecast_quantiles[:, 0, :], forecast_quantiles[:, 1, :], forecast_quantiles[:, 2, :]
 
