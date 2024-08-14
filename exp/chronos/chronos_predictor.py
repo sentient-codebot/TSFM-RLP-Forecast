@@ -45,6 +45,13 @@ if __name__ == "__main__":
     exp_id = cf.generate_time_id()
     
     for reso, country in reso_country:
+        if reso == '60m':
+            num_steps_day = 24
+        elif reso == '30m':
+            num_steps_day = 48
+        elif reso == '15m':
+            num_steps_day = 96
+        
         for _type in ['ind', 'agg']:
             print('--------------------------------------------------')
             print(f"reso: {reso}, country: {country}, type: {_type}")
@@ -54,16 +61,12 @@ if __name__ == "__main__":
                 resolution = reso,
                 country = country,
                 data_type = _type,
-                window_split_ratio = 0.75, # TODO 有点混乱
+                context_length=num_steps_day*3,
+                prediction_length=num_steps_day,
             )
             # pair_iterable.total_pairs = 10 # NOTE only for debug
             pair_it = dl.array_to_tensor(iter(pair_iterable))
-            if reso == '60m':
-                pred_length = 24
-            elif reso == '30m':
-                pred_length = 48
-            elif reso == '15m':
-                pred_length = 96
+            
             # ----------------- Experiment Configuration -----------------
             data_config = cf.DataConfig(
                 country=country,
@@ -80,27 +83,28 @@ if __name__ == "__main__":
             pipeline = chronos_prediction()
             
             _input = []
-            _output = []
+            _target = []
             for x, y in tqdm(pair_it, total=len(pair_iterable)):
                 _input.append(x)
-                _output.append(y.numpy())
+                _target.append(y.numpy())
             _input = torch.stack(_input)
-            _output = np.stack(_output)             
-            forecast = pipeline.predict(_input, pred_length, limit_prediction_length=False)
-            print(forecast.shape)
+            _target = np.stack(_target)
+            forecast = pipeline.predict(_input, num_steps_day, limit_prediction_length=False)
+            print('input shape', _input.shape)
+            print('target, forecast shape', _target.shape, forecast.shape)
             low, median, high = np.quantile(forecast.numpy(), [0.1, 0.5, 0.9], axis=1)
-            print(low.shape, median.shape, high.shape)
+            print('low, median, high shape', low.shape, median.shape, high.shape)
 
             # report the nan with 0
             low = np.nan_to_num(low, nan=0)
             median = np.nan_to_num(median, nan=0)
             high = np.nan_to_num(high, nan=0)
             
-            _q_10 = evm.quantile_loss(low, _output, 0.1).mean()
-            _q_50 = evm.quantile_loss(median, _output, 0.5).mean()
-            _q_90 = evm.quantile_loss(high, _output, 0.9).mean()
-            _mae = evm.mae(median, _output)
-            _rmse = evm.rmse(median, _output)
+            _q_10 = evm.quantile_loss(low, _target, 0.1).mean()
+            _q_50 = evm.quantile_loss(median, _target, 0.5).mean()
+            _q_90 = evm.quantile_loss(high, _target, 0.9).mean()
+            _mae = evm.mae(median, _target)
+            _rmse = evm.rmse(median, _target)
                     
             eval_metrics = evm.EvaluationMetrics(
                 quantile_loss={
