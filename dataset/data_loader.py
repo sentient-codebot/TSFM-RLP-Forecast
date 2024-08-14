@@ -3,7 +3,7 @@ import sys
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
 
-import torch
+# import torch
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -64,12 +64,18 @@ class PairIterable:
     
     def __next__(self):
         return next(self.__gen)
+    
+def array_to_list(it):
+    for x, y in it:
+        yield x.tolist(), y.tolist()
             
 def array_to_tensor(it):
+    import torch
     for x, y in it:
         yield torch.tensor(x), torch.tensor(y)
         
 def collate_fn(it, batch_size):
+    import torch
     while True:
         list_x = []
         list_y = []
