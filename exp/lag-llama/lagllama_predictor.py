@@ -97,6 +97,12 @@ def create_pd_dataset(data, freq):
             'item_id': unit_id,
             'target': data[unit_id]
         } , index=date_range)
+
+        # Set numerical columns as float32
+        for col in df.columns:
+            # Check if column is not of string type
+            if df[col].dtype != 'object' and pd.api.types.is_string_dtype(df[col]) == False:
+                df[col] = df[col].astype('float32')
         df_list.append(df)
 
     return PandasDataset(df_list, target="target", freq=freq)
@@ -157,18 +163,19 @@ if __name__ == "__main__":
                 resolution = reso,
                 country = country,
                 data_type = _type,
-                window_split_ratio = 0.75, # TODO 有点混乱
+                context_length=num_steps_day*3,
+                prediction_length=num_steps_day,
             )
             # pair_iterable.total_pairs = 10 # NOTE only for debug
             pair_it = dl.array_to_tensor(iter(pair_iterable))
             if reso == '60m':
-                pred_length = 24
+                num_steps_day = 24
                 freq = '60min'
             elif reso == '30m':
-                pred_length = 48
+                num_steps_day = 48
                 freq = '30min'
             elif reso == '15m':
-                pred_length = 96
+                num_steps_day = 96
                 freq = '15min'
             # ----------------- Experiment Configuration -----------------
             data_config = cf.DataConfig(
@@ -187,7 +194,7 @@ if __name__ == "__main__":
             input_dataset, _, _output = generate_dataset(pair_it, len(pair_iterable), freq)
 
             # make prediction
-            forecasts, tss = predict(input_dataset, pred_length)
+            forecasts, tss = predict(input_dataset, num_steps_day, num_steps_day * 3)
 
             print(len(forecasts))
             # we can get median by `forecasts[i].median` as well
@@ -226,22 +233,22 @@ if __name__ == "__main__":
             exp_config.append_csv(f'result/{exp_id}.csv')
 
             # Plot first 9 units' predictions
-            plt.figure(figsize=(20, 15))
-            date_formater = mdates.DateFormatter('%b, %d')
-            plt.rcParams.update({'font.size': 15})
+            # plt.figure(figsize=(20, 15))
+            # date_formater = mdates.DateFormatter('%b, %d')
+            # plt.rcParams.update({'font.size': 15})
 
-            # Iterate through the first 9 series, and plot the predicted samples
-            for idx, (forecast, ts) in islice(enumerate(zip(forecasts, tss)), 9):
-                ax = plt.subplot(3, 3, idx + 1)
-                peroid_idx = forecast.index
-                output = pd.Series(_output[idx], index=peroid_idx)
-                plt.plot(ts[:-pred_length].to_timestamp(), label="previous")
-                plt.plot(output.to_timestamp(), label="target")
-                forecast.plot( color='g')
-                plt.xticks(rotation=60)
-                ax.xaxis.set_major_formatter(date_formater)
-                ax.set_title(forecast.item_id)
+            # # Iterate through the first 9 series, and plot the predicted samples
+            # for idx, (forecast, ts) in islice(enumerate(zip(forecasts, tss)), 9):
+            #     ax = plt.subplot(3, 3, idx + 1)
+            #     peroid_idx = forecast.index
+            #     output = pd.Series(_output[idx], index=peroid_idx)
+            #     plt.plot(ts[:-num_steps_day].to_timestamp(), label="previous")
+            #     plt.plot(output.to_timestamp(), label="target")
+            #     forecast.plot( color='g')
+            #     plt.xticks(rotation=60)
+            #     ax.xaxis.set_major_formatter(date_formater)
+            #     ax.set_title(forecast.item_id)
 
-            plt.gcf().tight_layout()
-            plt.legend()
-            plt.show()
+            # plt.gcf().tight_layout()
+            # plt.legend()
+            # plt.show()
