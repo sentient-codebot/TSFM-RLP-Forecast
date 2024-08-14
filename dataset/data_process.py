@@ -60,9 +60,6 @@ class LoadDataset:
         # split the data into train and test set based on the id
         train_data = data[data['id'].isin(id_list)]
         test_data = data[~data['id'].isin(id_list)]
-        
-        raise NotImplementedError("Split over ids and time.")
-        raise NotImplementedError("make sure split is deterministic.")
   
         return train_data, test_data
     
