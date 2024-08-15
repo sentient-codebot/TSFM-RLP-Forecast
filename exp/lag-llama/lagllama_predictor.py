@@ -158,6 +158,16 @@ if __name__ == "__main__":
             print('--------------------------------------------------')
             print(f"reso: {reso}, country: {country}, type: {_type}")
             print('--------------------------------------------------')
+            if reso == '60m':
+                num_steps_day = 24
+                freq = '60min'
+            elif reso == '30m':
+                num_steps_day = 48
+                freq = '30min'
+            elif reso == '15m':
+                num_steps_day = 96
+                freq = '15min'
+
             # load datastet
             pair_iterable = dl.data_for_exp(
                 resolution = reso,
@@ -168,15 +178,7 @@ if __name__ == "__main__":
             )
             # pair_iterable.total_pairs = 10 # NOTE only for debug
             pair_it = dl.array_to_tensor(iter(pair_iterable))
-            if reso == '60m':
-                num_steps_day = 24
-                freq = '60min'
-            elif reso == '30m':
-                num_steps_day = 48
-                freq = '30min'
-            elif reso == '15m':
-                num_steps_day = 96
-                freq = '15min'
+
             # ----------------- Experiment Configuration -----------------
             data_config = cf.DataConfig(
                 country=country,
@@ -194,7 +196,7 @@ if __name__ == "__main__":
             input_dataset, _, _output = generate_dataset(pair_it, len(pair_iterable), freq)
 
             # make prediction
-            forecasts, tss = predict(input_dataset, num_steps_day, num_steps_day * 3)
+            forecasts, tss = predict(input_dataset, num_steps_day)
 
             print(len(forecasts))
             # we can get median by `forecasts[i].median` as well
