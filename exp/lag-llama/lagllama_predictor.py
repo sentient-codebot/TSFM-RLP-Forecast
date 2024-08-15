@@ -235,22 +235,22 @@ if __name__ == "__main__":
             exp_config.append_csv(f'result/{exp_id}.csv')
 
             # Plot first 9 units' predictions
-            # plt.figure(figsize=(20, 15))
-            # date_formater = mdates.DateFormatter('%b, %d')
-            # plt.rcParams.update({'font.size': 15})
+            plt.figure(figsize=(20, 15))
+            date_formater = mdates.DateFormatter('%b, %d')
+            plt.rcParams.update({'font.size': 15})
 
-            # # Iterate through the first 9 series, and plot the predicted samples
-            # for idx, (forecast, ts) in islice(enumerate(zip(forecasts, tss)), 9):
-            #     ax = plt.subplot(3, 3, idx + 1)
-            #     peroid_idx = forecast.index
-            #     output = pd.Series(_output[idx], index=peroid_idx)
-            #     plt.plot(ts[:-num_steps_day].to_timestamp(), label="previous")
-            #     plt.plot(output.to_timestamp(), label="target")
-            #     forecast.plot( color='g')
-            #     plt.xticks(rotation=60)
-            #     ax.xaxis.set_major_formatter(date_formater)
-            #     ax.set_title(forecast.item_id)
+            # Iterate through the first 9 series, and plot the predicted samples
+            for idx, (forecast, ts) in islice(enumerate(zip(forecasts, tss)), 9):
+                ax = plt.subplot(3, 3, idx + 1)
+                peroid_idx = forecast.index
+                output = pd.Series(_output[idx], index=peroid_idx)
+                plt.plot(ts[:-num_steps_day].to_timestamp(), label="previous")
+                plt.plot(output.to_timestamp(), label="target")
+                forecast.plot( color='g')
+                plt.xticks(rotation=60)
+                ax.xaxis.set_major_formatter(date_formater)
+                ax.set_title(forecast.item_id)
 
-            # plt.gcf().tight_layout()
-            # plt.legend()
-            # plt.show()
+            plt.gcf().tight_layout()
+            plt.legend()
+            plt.show()
