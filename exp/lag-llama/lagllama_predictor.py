@@ -158,8 +158,6 @@ if __name__ == "__main__":
             print('--------------------------------------------------')
             print(f"reso: {reso}, country: {country}, type: {_type}")
             print('--------------------------------------------------')
-            # pair_iterable.total_pairs = 10 # NOTE only for debug
-            pair_it = dl.array_to_tensor(iter(pair_iterable))
             if reso == '60m':
                 num_steps_day = 24
                 freq = '60min'
@@ -178,6 +176,8 @@ if __name__ == "__main__":
                 context_length=num_steps_day*3,
                 prediction_length=num_steps_day,
             )
+            # pair_iterable.total_pairs = 10 # NOTE only for debug
+            pair_it = dl.array_to_tensor(iter(pair_iterable))
 
             # ----------------- Experiment Configuration -----------------
             data_config = cf.DataConfig(
