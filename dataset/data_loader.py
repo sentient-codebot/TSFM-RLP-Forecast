@@ -14,16 +14,18 @@ class PairIterable:
     def __init__(
         self,
         df: pd.DataFrame,
-        window_length: int,
-        window_split_ratio: float,
+        prediction_length: int = 24,
+        context_length: int = 72,
         # num_houses: int,
         # num_pairs: int = 60,
         total_pairs: int = 1800,
         random_state: int = 0000,
+        # window_length: int,
+        # window_split_ratio: float,
     ):
         pair_maker = dp.PairMaker(
-            window_length=window_length,
-            window_split_ratio=window_split_ratio,
+            window_length=prediction_length+context_length,
+            window_split_ratio=(context_length)/float(context_length+prediction_length),
             random_state=random_state
         )
         self.all_ids = df['id'].unique()
@@ -95,9 +97,11 @@ def data_for_exp(
         country: str = 'nl',
         data_type: str = 'ind',
         prediction_length: int = 24,
-        window_split_ratio: float = 0.75,
+        context_length: int = 72,
+        window_split_ratio: float = 0.75, 
         random_state: int = 42
     ):
+        # raise NotImplementedError("window_split_ratio -> int")
         loader = dp.LoadDataset(
                 resolution=resolution,
                 country=country,
@@ -130,8 +134,8 @@ def data_for_exp(
                 df_train, _ = loader.load_dataset_ind()
                 pair_it = PairIterable(
                     df_train,
-                    window_length=prediction_length*4,
-                    window_split_ratio=window_split_ratio,
+                    prediction_length=prediction_length,
+                    context_length=context_length,
                     total_pairs=30*60,
                     random_state=random_state
                 )   
@@ -145,8 +149,8 @@ def data_for_exp(
                 print("Making pairs")
                 pair_it = PairIterable(
                     df_train,
-                    window_length=prediction_length*4,
-                    window_split_ratio=window_split_ratio,
+                    prediction_length=prediction_length,
+                    context_length=context_length,
                     total_pairs=22*60,
                     random_state=random_state
                 )
@@ -158,8 +162,8 @@ def data_for_exp(
                 print("Making pairs")
                 pair_it = PairIterable(
                     df_train,
-                    window_length=prediction_length*4,
-                    window_split_ratio=window_split_ratio,
+                    prediction_length=prediction_length,
+                    context_length=context_length,
                     total_pairs=6*70,
                     random_state=random_state
                 )
@@ -173,8 +177,8 @@ def data_for_exp(
                 print("Making pairs")
                 pair_it = PairIterable(
                     df_train,
-                    window_length=prediction_length*4,
-                    window_split_ratio=window_split_ratio,
+                    prediction_length=prediction_length,
+                    context_length=context_length,
                     total_pairs=6*60,
                     random_state=random_state
                 )  
@@ -186,8 +190,8 @@ def data_for_exp(
                 print("Making pairs")
                 pair_it = PairIterable(
                     df_train,
-                    window_length=prediction_length*2*4,
-                    window_split_ratio=window_split_ratio,
+                    prediction_length=prediction_length,
+                    context_length=context_length,
                     total_pairs=6*70,
                     random_state=random_state
                 )
@@ -204,8 +208,8 @@ def data_for_exp(
                 print("Making pairs")
                 pair_it = PairIterable(
                     df_train,
-                    window_length=prediction_length*2*4,
-                    window_split_ratio=window_split_ratio,
+                    prediction_length=prediction_length,
+                    context_length=context_length,
                     total_pairs=6*70,
                     random_state=random_state
                 )  
@@ -217,8 +221,8 @@ def data_for_exp(
                 print("Making pairs")
                 pair_it = PairIterable(
                     df_train,
-                    window_length=prediction_length*4*4,
-                    window_split_ratio=window_split_ratio,
+                    prediction_length=prediction_length,
+                    context_length=context_length,
                     total_pairs=6*40,
                     random_state=random_state
                 )
@@ -233,8 +237,8 @@ def data_for_exp(
                 print("Making pairs")
                 pair_it = PairIterable(
                     df_train,
-                    window_length=prediction_length*4*4,
-                    window_split_ratio=0.75,
+                    prediction_length=prediction_length,
+                    context_length=context_length,
                     total_pairs=6*40,
                     random_state=random_state
                 )
@@ -246,8 +250,8 @@ def data_for_exp(
                 print("Making pairs")
                 pair_it = PairIterable(
                     df_train,
-                    window_length=prediction_length*2*4,
-                    window_split_ratio=window_split_ratio,
+                    prediction_length=prediction_length,
+                    context_length=context_length,
                     total_pairs=30*60,
                     random_state=random_state
                 )
@@ -261,8 +265,8 @@ def data_for_exp(
                 print("Making pairs")
                 pair_it = PairIterable(
                     df_train,
-                    window_length=prediction_length*2*4,
-                    window_split_ratio=window_split_ratio,
+                    prediction_length=prediction_length,
+                    context_length=context_length,
                     total_pairs=5*60,
                     random_state=random_state
                 )
@@ -274,8 +278,8 @@ def data_for_exp(
                 print("Making pairs")
                 pair_it = PairIterable(
                     df_train,
-                    window_length=prediction_length*4,
-                    window_split_ratio=window_split_ratio,
+                    prediction_length=prediction_length,
+                    context_length=context_length,
                     total_pairs=30*60,
                     random_state=random_state
                 )            
@@ -289,8 +293,8 @@ def data_for_exp(
                 print("Making pairs")
                 pair_it = PairIterable(
                     df_train,
-                    window_length=prediction_length*4,
-                    window_split_ratio=window_split_ratio,
+                    prediction_length=prediction_length,
+                    context_length=context_length,
                     total_pairs=5*60,
                     random_state=random_state
                 )
