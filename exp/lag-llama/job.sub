@@ -8,10 +8,11 @@
 #BSUB -o mm_batch_gpu_%J.out
 #BSUB -q hpcintrogpu
 #BSUB -n 32
-#BSUB -R "rusage[mem=2048]"
+#BSUB -R "rusage[mem=5GB]"
 #BSUB -W 15
 #BSUB -R "span[hosts=1]"
 #BSUB -gpu "num=1:mode=exclusive_process"
+#BSUB -R "select[gpu32gb]"
 
 # define the driver name to use
 # valid values: matmult_c.nvc++, matmult_f.nvc++
@@ -19,6 +20,7 @@ EXPORT CUDA_VISIBLE_DEVICES=0,1
 # load module for shared cuda libraries
 module load /appl9/nvhpc/2023_2311/modulefiles/nvhpc-nompi/23.11
 module load python3/3.10.6
+module load cuda/11.6
 
 python3 ./exp/lag-llama/lagllama_predictor.py
 
