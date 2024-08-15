@@ -143,11 +143,11 @@ def generate_dataset(pair_it, total, freq): #TODO: remove total later
 if __name__ == "__main__":
     reso_country = [
             ('60m', 'nl'),
-            # ('60m', 'ge'),
-            # ('30m', 'ge'),
-            # ('15m', 'ge'),
-            # ('30m', 'uk'),
-            # ('60m', 'uk'),
+            ('60m', 'ge'),
+            ('30m', 'ge'),
+            ('15m', 'ge'),
+            ('30m', 'uk'),
+            ('60m', 'uk'),
         ]
 
     # -------- Experiment Configuration --------
@@ -233,7 +233,7 @@ if __name__ == "__main__":
                 result=eval_metrics,
             )
             exp_config.to_stdout()
-            # exp_config.append_csv(f'result/{exp_id}.csv')
+            exp_config.append_csv(f'result/{exp_id}.csv')
 
             # Plot first 9 units' predictions
             # plt.figure(figsize=(20, 15))
