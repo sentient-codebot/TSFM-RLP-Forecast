@@ -314,7 +314,6 @@ def data_for_exp(
                 )
         elif resolution == '30m' and country == 'uk':
             if data_type == 'ind':
-                houses = 30
                 print("Loading individual data")
                 df_train, df_test = loader.load_dataset_ind()
                 print("Making pairs")
@@ -328,9 +327,7 @@ def data_for_exp(
             if data_type == 'agg':
                 print("Loading aggregated data")
                 df_train, _ = loader.load_dataset_agg(
-                    num_agg = 5,
-                    num_houses = 100,
-                    random_state = random_state
+                    num_houses = 10,
                 )
                 print("Making pairs")
                 pair_it = LazyPairIterable(
@@ -342,7 +339,6 @@ def data_for_exp(
                 )
         elif resolution == '60m' and country == 'uk':
             if data_type == 'ind':
-                houses = 30
                 print("Loading individual data")
                 df_train, _ = loader.load_dataset_ind()
                 print("Making pairs")
@@ -356,9 +352,7 @@ def data_for_exp(
             if data_type == 'agg':
                 print("Loading aggregated data")
                 df_train, _ = loader.load_dataset_agg(
-                    num_agg = 5,
-                    num_houses = 60,
-                    random_state = random_state
+                    num_houses = 10, # better < number of ids in each partition
                 )
                 print("Making pairs")
                 pair_it = LazyPairIterable(

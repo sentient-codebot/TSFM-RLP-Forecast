@@ -206,6 +206,50 @@ class LoadUKDataset(LoadDataset):
         df_test = self.data_dd.partitions[self.test_row_groups]
   
         return df_train, df_test
+    
+    def aggreagte_by_id(self, df, num_houses: int =3):
+        "num_houses: int, the number of houses (ids) to aggregate."
+        # Step 1: Create a group key by using a counter that increments every N rows
+        def create_group_key(partition):
+            partition['group_key'] = (partition.groupby('datetime').cumcount() // num_houses)
+            return partition
+
+        # Define the meta to include the 'group_key' column
+        meta = df._meta.assign(group_key=0)
+        raise NotImplementedError(
+            r"""
+            this groupby operation is too expensive, even if it is \
+                only within each parition. 
+            """
+        )
+        df = df.map_partitions(create_group_key, meta=meta)
+        
+        # Step 2: Group by 'datetime' and 'group_key', then sum the 'target' values
+        # NOTE: LIMITATION: restrict to within-partition groupby, efficient but not "true and precise".
+        def group_and_sum(partition):
+            return partition.groupby(['datetime', 'group_key'])['target'].sum().reset_index()
+        
+        result = df.map_partitions(group_and_sum, meta=meta)
+        
+        # [compatibility-only]
+        result['category'] = self.resolution
+        result['id'] = result['group_key'].astype('str')
+        
+        # Drop the 'group_key' column as it's no longer needed
+        result = result.drop(columns=['group_key'])
+        
+        return result
+    
+    def load_dataset_agg(self, num_houses: int = 3, **kwargs):
+        "num_houses: int, the number of houses (ids) to aggregate."
+        df_train, df_test = self.load_dataset_ind()
+        
+        df_agg_train = self.aggreagte_by_id(df_train, num_houses)
+        df_agg_test = self.aggreagte_by_id(df_test, num_houses)
+        
+        return df_agg_train, df_agg_test
+        
+        
 
 class PairMaker:
     """

@@ -71,6 +71,9 @@ if __name__ == "__main__":
             print('--------------------------------------------------')
             print(f"reso: {reso}, country: {country}, type: {_type}")
             print('--------------------------------------------------')
+            if country == 'uk' and type == 'agg':
+                print('uk agg not implemented.')
+                continue
             # load datastet
             pair_iterable = dl.data_for_exp(
                 resolution = reso,
@@ -82,6 +85,12 @@ if __name__ == "__main__":
             # pair_iterable.total_pairs = 10 # NOTE only for debug
             batch_size = 128
             pair_it = dl.collate_list(dl.array_to_list(iter(pair_iterable)), batch_size=batch_size)
+            
+            for x, y in tqdm(pair_it):
+                print(f'{len(x), len(x[0])}')
+                print(f'{len(y), len(y[0])}')
+                
+            continue
             
             # ----------------- Experiment Configuration -----------------
             data_config = cf.DataConfig(
