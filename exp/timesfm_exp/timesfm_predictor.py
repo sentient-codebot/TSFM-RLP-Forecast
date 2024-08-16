@@ -71,7 +71,7 @@ if __name__ == "__main__":
             print('--------------------------------------------------')
             print(f"reso: {reso}, country: {country}, type: {_type}")
             print('--------------------------------------------------')
-            if country == 'uk' and type == 'agg':
+            if country == 'uk' and _type == 'agg':
                 print('uk agg not implemented.')
                 continue
             # load datastet
@@ -86,11 +86,12 @@ if __name__ == "__main__":
             batch_size = 128
             pair_it = dl.collate_list(dl.array_to_list(iter(pair_iterable)), batch_size=batch_size)
             
-            for x, y in tqdm(pair_it):
-                print(f'{len(x), len(x[0])}')
-                print(f'{len(y), len(y[0])}')
+            # for x, y in pair_it:
+            #     print(f'{len(x), len(x[0])}')
+            #     print(f'{len(y), len(y[0])}')
+            #     break
                 
-            continue
+            # continue
             
             # ----------------- Experiment Configuration -----------------
             data_config = cf.DataConfig(
