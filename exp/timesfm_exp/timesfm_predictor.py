@@ -113,24 +113,23 @@ if __name__ == "__main__":
             
             _input = []
             _target = []
-            _forecast = []
+            forecast = None
             for x, y in tqdm(pair_it, total=len(pair_iterable)//batch_size):
                 _input += x
                 _target += y
-                y_pred = model.forecast(
+                y_pred, _ = model.forecast(
                     inputs=x,
                     freq=[0]*len(x),
                 )
-                _forecast += y_pred
-            _target = np.concatenate(_target, axis=0)
-            for i in range(len(_forecast)):
-                print(f"{_forecast[i].shape}")
-                exit()
-            forecast = np.concatenate(_forecast, axis=0)
-            print(forecast.shape)
+                if forecast is None:
+                    forecast = y_pred
+                else:
+                    forecast = np.concatenate([forecast, y], axis=0)
             
-            _mae = evm.mae(forecast, _target)
-            _rmse = evm.rmse(forecast, _target)
+            target = np.array(_target)
+            
+            _mae = evm.mae(forecast, target)
+            _rmse = evm.rmse(forecast, target)
             _q_10 = -1.0
             _q_50 = -1.0
             _q_90 = -1.0
