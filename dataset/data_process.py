@@ -1,7 +1,11 @@
-from typing import Union
+from typing import Union, Dict
+import yaml
+import itertools
+
 import pandas as pd
 import dask.dataframe as dd
 import numpy as np
+from tqdm import tqdm
 
 class LoadDataset:
     """
@@ -62,6 +66,19 @@ class LoadDataset:
         test_data = data[~data['id'].isin(id_list)]
   
         return train_data, test_data
+    
+    def get_row_group_ids(self) -> Dict:
+        path_file = self._path()
+        data_dd = dd.read_parquet(path_file, split_row_groups=True)
+        num_divisions = data_dd.npartitions
+        
+        dict_row_group_ids = {}
+        for idx_division in tqdm(range(num_divisions)):
+            rgroup = data_dd.get_partition(idx_division)
+            id_list = rgroup['id'].unique().compute()
+            dict_row_group_ids[idx_division] = list(id_list)
+            
+        return dict_row_group_ids
     
     def load_dataset_agg(self, 
                          num_agg: int = 2,
@@ -136,6 +153,59 @@ class LoadDataset:
         print("Number of unique ids: ", len(id_list))
         print("Number of data points: ", data.shape[0])
     
+class LoadUKDataset(LoadDataset):
+    def __init__(self, *args, **kwargs):
+        super(LoadUKDataset, self).__init__(*args, **kwargs)
+        
+    def _split_ids(self):
+        with open(f'dataset/{self.resolution}_{self.country}_row_group_ids.yaml', 'r') as f:
+            dict_row_group_ids = yaml.safe_load(f)
+        self.dict_row_group_ids = dict_row_group_ids
+        
+        list_len_row_group = [len(_row_group_ids)-1 for _row_group_ids in dict_row_group_ids.values()]
+            # -1 to exclude the last id in the row group because it's also in the next.
+        list_len_row_group[-1] += 1 # add the last id in the last row group
+        accum_len_row_group = list(itertools.accumulate(list_len_row_group))
+        print('total number of ids:', accum_len_row_group[-1])
+        print('total number of row groups:', len(dict_row_group_ids))
+        assert self.split_ratio <= 1
+        for idx, accum_len in enumerate(accum_len_row_group):
+            if self.split_ratio == 0:
+                _last_train_group = -1
+                break
+            if accum_len > self.split_ratio * accum_len_row_group[-1]:
+                if idx == 0:
+                    _last_train_group = 0
+                else:
+                    _last_train_group = idx - 1
+                break
+            elif idx == len(accum_len_row_group) - 1:
+                _last_train_group = idx
+        print('last train group:', _last_train_group)
+        
+        self.train_row_groups = list(range(0, _last_train_group+1))
+        self.test_row_groups = list(range(_last_train_group+1, len(dict_row_group_ids)))
+        print('total number of train ids:', 
+              sum(list_len_row_group[_idx_group] for _idx_group in self.train_row_groups))
+        print('total number of test ids:', 
+              sum(list_len_row_group[_idx_group] for _idx_group in self.test_row_groups))
+
+    def load_dataset_ind(self):
+        """
+        Load dataset from the path, the dataset is of individual level.
+        """
+        self._input_check()
+        
+        # example : "hf://datasets/Weijie1996/load_timeseries/30m_resolution_ge/ge_30m.parquet"
+        path_file = self._path()
+        self.data_dd = dd.read_parquet(path_file, split_row_groups=True)
+        
+        # split ids into train and test
+        self._split_ids()
+        df_train = self.data_dd.partitions[self.train_row_groups]
+        df_test = self.data_dd.partitions[self.test_row_groups]
+  
+        return df_train, df_test
 
 class PairMaker:
     """

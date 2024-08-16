@@ -1,11 +1,13 @@
 import os 
 import sys
+from typing import Dict
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
 
 # import torch
 import numpy as np
 import pandas as pd
+import dask.dataframe as dd
 from tqdm import tqdm
 
 import dataset.data_process as dp
@@ -67,6 +69,51 @@ class PairIterable:
     def __next__(self):
         return next(self.__gen)
     
+class LazyPairIterable:
+    def __init__(
+        self,
+        df: dd.DataFrame,
+        prediction_length: int = 24,
+        context_length: int = 72,
+        total_pairs: int = 1800,
+        random_state: int = 0000,
+    ):
+        self.pair_maker = dp.PairMaker(
+            window_length=prediction_length+context_length,
+            window_split_ratio=(context_length)/float(context_length+prediction_length),
+            random_state=random_state
+        )
+        # NOTE
+        #   df's partitions were re-indexed. 
+        self.df = df
+        self.total_pairs = total_pairs
+        print('Total pairs specified:', self.total_pairs)
+        
+    def __len__(self):
+        return self.total_pairs
+    
+    def __iter__(self):
+        self.__gen = self.__create_generator()
+        return self
+    
+    def __create_generator(self):
+        _pair_count = 0
+        for idx_row_group in range(self.df.npartitions):
+            # make pairs
+            row_group = self.df.get_partition(idx_row_group).compute()
+            pairs = self.pair_maker.make_pairs(
+                row_group,
+                'noverlap'
+            )
+            for pair in pairs:
+                _pair_count += 1
+                yield pair
+                if _pair_count == self.total_pairs:
+                    return
+                
+    def __next__(self):
+        return next(self.__gen)
+    
 def array_to_list(it):
     for x, y in it:
         yield x.tolist(), y.tolist()
@@ -75,6 +122,22 @@ def array_to_tensor(it):
     import torch
     for x, y in it:
         yield torch.tensor(x), torch.tensor(y)
+        
+def collate_list(it, batch_size):
+    "collate list into list"
+    while True:
+        list_x = []
+        list_y = []
+        while len(list_x) < batch_size:
+            try:
+                x, y = next(it)
+                list_x.append(x)
+                list_y.append(y)
+            except StopIteration:
+                break
+        if len(list_x) == 0:
+            raise StopIteration
+        yield list_x, list_y
         
 def collate_fn(it, batch_size):
     import torch
@@ -102,11 +165,18 @@ def data_for_exp(
         random_state: int = 42
     ):
         # raise NotImplementedError("window_split_ratio -> int")
-        loader = dp.LoadDataset(
+        if country == 'uk':
+            loader = dp.LoadUKDataset(
                 resolution=resolution,
                 country=country,
                 split_ratio=1
             )
+        else:
+            loader = dp.LoadDataset(
+                    resolution=resolution,
+                    country=country,
+                    split_ratio=1
+                )
 
         reso_country = [
             ('60m', 'nl'),
@@ -246,9 +316,9 @@ def data_for_exp(
             if data_type == 'ind':
                 houses = 30
                 print("Loading individual data")
-                df_train, _ = loader.load_dataset_ind()
+                df_train, df_test = loader.load_dataset_ind()
                 print("Making pairs")
-                pair_it = PairIterable(
+                pair_it = LazyPairIterable(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
@@ -263,7 +333,7 @@ def data_for_exp(
                     random_state = random_state
                 )
                 print("Making pairs")
-                pair_it = PairIterable(
+                pair_it = LazyPairIterable(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
@@ -276,7 +346,7 @@ def data_for_exp(
                 print("Loading individual data")
                 df_train, _ = loader.load_dataset_ind()
                 print("Making pairs")
-                pair_it = PairIterable(
+                pair_it = LazyPairIterable(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
@@ -291,7 +361,7 @@ def data_for_exp(
                     random_state = random_state
                 )
                 print("Making pairs")
-                pair_it = PairIterable(
+                pair_it = LazyPairIterable(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
