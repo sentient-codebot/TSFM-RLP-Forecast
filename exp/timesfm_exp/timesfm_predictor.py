@@ -123,6 +123,9 @@ if __name__ == "__main__":
                 )
                 _forecast += y_pred
             _target = np.concatenate(_target, axis=0)
+            for i in range(len(_forecast)):
+                print(f"{_forecast[i].shape}")
+                exit()
             forecast = np.concatenate(_forecast, axis=0)
             print(forecast.shape)
             
