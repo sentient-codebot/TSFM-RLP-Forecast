@@ -112,8 +112,8 @@ if __name__ == "__main__":
                     freq=[0]*len(x),
                 )
                 _forecast += y_pred
-            _target = np.stack(_target)
-            forecast = np.stack(_forecast)
+            _target = np.concatenate(_target, axis=0)
+            forecast = np.concatenate(_forecast, axis=0)
             print(forecast.shape)
             
             _mae = evm.mae(forecast, _target)
