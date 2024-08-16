@@ -80,7 +80,8 @@ if __name__ == "__main__":
                 prediction_length=num_steps_day,
             )
             # pair_iterable.total_pairs = 10 # NOTE only for debug
-            pair_it = dl.collate_list(dl.array_to_list(iter(pair_iterable)), batch_size=128)
+            batch_size = 128
+            pair_it = dl.collate_list(dl.array_to_list(iter(pair_iterable)), batch_size=batch_size)
             
             # ----------------- Experiment Configuration -----------------
             data_config = cf.DataConfig(
@@ -103,7 +104,7 @@ if __name__ == "__main__":
             _input = []
             _target = []
             _forecast = []
-            for x, y in tqdm(pair_it, total=len(pair_iterable)):
+            for x, y in tqdm(pair_it, total=len(pair_iterable)//batch_size):
                 _input += x
                 _target += y
                 y_pred = model.forecast(

@@ -136,7 +136,7 @@ def collate_list(it, batch_size):
             except StopIteration:
                 break
         if len(list_x) == 0:
-            raise StopIteration
+            return
         yield list_x, list_y
         
 def collate_fn(it, batch_size):
@@ -152,7 +152,7 @@ def collate_fn(it, batch_size):
             except StopIteration:
                 break
         if len(list_x) == 0:
-            raise StopIteration
+            return
         yield torch.stack(list_x, dim=0), torch.stack(list_y, dim=0)
 
 def data_for_exp(
