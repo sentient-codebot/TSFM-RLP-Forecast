@@ -312,6 +312,8 @@ class PairMaker:
         start = 0
         data = data['target']
         for i in range(self.num_pairs):
+            if len(data) < self.window_length:
+                break # no pair can be made 
             if type_of_split == 'overlap':
                 # if data.shape[0] < self.window_length+self.num_pairs+1:
                 #     raise ValueError("The length of the data is not enough for the window length and number of pairs")
