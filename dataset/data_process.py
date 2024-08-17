@@ -189,6 +189,22 @@ class LoadUKDataset(LoadDataset):
               sum(list_len_row_group[_idx_group] for _idx_group in self.train_row_groups))
         print('total number of test ids:', 
               sum(list_len_row_group[_idx_group] for _idx_group in self.test_row_groups))
+        
+    def _ckeck_train_test_split(self):
+        if self.train_row_groups:
+            df_train = self.data_dd.partitions[self.train_row_groups]
+        else:
+            # create an empty Dask DataFrame with the same columns as self.data_dd
+            df_train = dd.from_pandas(pd.DataFrame(columns=self.data_dd.columns), npartitions=1)
+        
+        if self.test_row_groups:
+            df_test = self.data_dd.partitions[self.test_row_groups]
+        else:
+            # create an empty Dask DataFrame with the same columns as self.data_dd
+            df_test = dd.from_pandas(pd.DataFrame(columns=self.data_dd.columns), npartitions=1)
+        
+        return df_train, df_test
+  
 
     def load_dataset_ind(self):
         """
@@ -202,9 +218,8 @@ class LoadUKDataset(LoadDataset):
         
         # split ids into train and test
         self._split_ids()
-        df_train = self.data_dd.partitions[self.train_row_groups]
-        df_test = self.data_dd.partitions[self.test_row_groups]
-  
+        df_train, df_test = self._ckeck_train_test_split()
+
         return df_train, df_test
     
     def aggreagte_by_id(self, df, num_houses: int =3):
@@ -349,14 +364,14 @@ if __name__ == "__main__":
         random_state=42
     )
     
-    # Select one group of data
-    train = train[train['id'] == train['id'].unique()[0]]
-    X, Y = pair_maker.make_pairs(train, type_of_split='overlap')
-    print(X.shape, Y.shape) 
+    # # Select one group of data
+    # train = train[train['id'] == train['id'].unique()[0]]
+    # X, Y = pair_maker.make_pairs(train, type_of_split='overlap')
+    # print(X.shape, Y.shape) 
     
-    import matplotlib.pyplot as plt
-    _num = 20
-    combined = np.concatenate((X[_num], Y[_num]))
-    plt.plot(combined)
-    plt.plot(X[_num])
-    plt.show()
+    # import matplotlib.pyplot as plt
+    # _num = 20
+    # combined = np.concatenate((X[_num], Y[_num]))
+    # plt.plot(combined)
+    # plt.plot(X[_num])
+    # plt.show()

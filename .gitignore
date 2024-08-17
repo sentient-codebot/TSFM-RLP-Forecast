@@ -7,3 +7,4 @@ exp/chronos/lightning_logs/
 .DS_Store
 result/
 /lag-llama
+dataset/_test.py
