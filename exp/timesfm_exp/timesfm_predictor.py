@@ -49,9 +49,9 @@ def get_timesfm_predictor(
 
 if __name__ == "__main__":
     reso_country = [
-            ('60m', 'nl'),
-            ('60m', 'ge'),
-            ('30m', 'ge'),
+            # ('60m', 'nl'),
+            # ('60m', 'ge'),
+            # ('30m', 'ge'),
             ('15m', 'ge'),
             ('30m', 'uk'),
             ('60m', 'uk'),

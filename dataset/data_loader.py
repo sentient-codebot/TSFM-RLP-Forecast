@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import dask.dataframe as dd
 from tqdm import tqdm
+import yaml
 
 import dataset.data_process as dp
 
@@ -113,7 +114,32 @@ class LazyPairIterable:
                 
     def __next__(self):
         return next(self.__gen)
+
+def batch_generator(pair_iterable, batch_size=120):
+    X_batch = []
+    y_batch = []
     
+    iterator = iter(pair_iterable)
+    
+    for x, y in iterator:
+        df = pd.DataFrame(np.hstack([x.reshape(1, -1), y.reshape(1, -1)]))
+        
+        df.dropna(inplace=True)
+        
+        if not df.empty:
+            x_clean, y_clean = df.iloc[:, 0].values, df.iloc[:, 1].values
+            X_batch.append(x_clean)
+            y_batch.append(y_clean)
+        
+        if len(X_batch) == batch_size:
+            yield np.array(X_batch), np.array(y_batch)
+            X_batch = []
+            y_batch = []
+            
+    if X_batch:
+        yield np.array(X_batch), np.array(y_batch)
+
+
 def array_to_list(it):
     for x, y in it:
         yield x.tolist(), y.tolist()
@@ -163,19 +189,23 @@ def data_for_exp(
         context_length: int = 72,
         window_split_ratio: float = 0.75, 
         random_state: int = 42
-    ):
+        ):
+        # load the YAML file
+        with open("dataset/data_loader_config.yaml", "r") as file:
+            config = yaml.safe_load(file)
+
         # raise NotImplementedError("window_split_ratio -> int")
         if country == 'uk':
             loader = dp.LoadUKDataset(
                 resolution=resolution,
                 country=country,
-                split_ratio=1
+                split_ratio=config['uk_split_ratio']
             )
         else:
             loader = dp.LoadDataset(
                     resolution=resolution,
                     country=country,
-                    split_ratio=1
+                    split_ratio=config['uk_split_ratio']
                 )
 
         reso_country = [
@@ -199,21 +229,21 @@ def data_for_exp(
         
         if resolution == '60m' and country == 'nl':
             if data_type == 'ind':
-                houses = 30
+                houses = config['nl_60']['houses_ind']
                 print("Loading individual data")
                 df_train, _ = loader.load_dataset_ind()
                 pair_it = PairIterable(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
-                    total_pairs=30*60,
+                    total_pairs=config['nl_60']['total_pairs_ind'],
                     random_state=random_state
                 )   
             if data_type == 'agg':
                 print("Loading aggregated data")
                 df_train, _ = loader.load_dataset_agg(
-                    num_agg = 3,
-                    num_houses = 22,
+                    num_agg = config['nl_60']['num_agg'],
+                    num_houses = config['nl_60']['num_houses_agg'],
                     random_state = random_state
                 )
                 print("Making pairs")
@@ -221,12 +251,12 @@ def data_for_exp(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
-                    total_pairs=22*60,
+                    total_pairs=config['nl_60']['total_pairs_agg'],
                     random_state=random_state
                 )
         elif resolution == '60m' and country == 'ge':
             if data_type == 'ind':
-                houses = 6
+                houses = config['ge_60']['houses_ind']
                 print("Loading individual data")
                 df_train, _ = loader.load_dataset_ind()
                 print("Making pairs")
@@ -234,14 +264,14 @@ def data_for_exp(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
-                    total_pairs=6*70,
+                    total_pairs=config['ge_60']['total_pairs_ind'],
                     random_state=random_state
                 )
             if data_type == 'agg':
                 print("Loading aggregated data")
                 df_train, _ = loader.load_dataset_agg(
-                    num_agg = 1,
-                    num_houses = 6,
+                    num_agg = config['ge_60']['num_agg'],
+                    num_houses = config['ge_60']['num_houses_agg'],
                     random_state = random_state
                 )
                 print("Making pairs")
@@ -249,12 +279,12 @@ def data_for_exp(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
-                    total_pairs=6*60,
+                    total_pairs=config['ge_60']['total_pairs_agg'],
                     random_state=random_state
                 )  
         elif resolution == '30m' and country == 'ge':
             if data_type == 'ind':
-                houses = 6
+                houses = config['ge_30']['houses_ind']
                 print("Loading individual data")
                 df_train, _ = loader.load_dataset_ind()
                 print("Making pairs")
@@ -262,17 +292,14 @@ def data_for_exp(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
-                    total_pairs=6*70,
+                    total_pairs=config['ge_30']['total_pairs_ind'],
                     random_state=random_state
                 )
-                # print(f'Loaded {houses} houses data, each with 70 pairs, each pair \
-                    # has input length of {prediction_length*2*3} and \
-                        # output length of {prediction_length*2}')
             if data_type == 'agg':
                 print("Loading aggregated data")
                 df_train, _ = loader.load_dataset_agg(
-                    num_agg = 1,
-                    num_houses = 6,
+                    num_agg = config['ge_30']['num_agg'],
+                    num_houses = config['ge_30']['num_houses_agg'],
                     random_state = random_state
                 )
                 print("Making pairs")
@@ -280,12 +307,12 @@ def data_for_exp(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
-                    total_pairs=6*70,
+                    total_pairs=config['ge_30']['total_pairs_agg'],
                     random_state=random_state
                 )  
         elif resolution == '15m' and country == 'ge':
             if data_type == 'ind':
-                houses = 6
+                houses = config['ge_15']['houses_ind']
                 print("Loading individual data")
                 df_train, _ = loader.load_dataset_ind()
                 print("Making pairs")
@@ -293,15 +320,15 @@ def data_for_exp(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
-                    total_pairs=6*40,
+                    total_pairs=config['ge_15']['total_pairs_ind'],
                     random_state=random_state
                 )
             
             if data_type == 'agg':
                 print("Loading aggregated data")
                 df_train, _ = loader.load_dataset_agg(
-                    num_agg = 1,
-                    num_houses = 6,
+                    num_agg = config['ge_15']['num_agg'],
+                    num_houses = config['ge_15']['num_houses_agg'],
                     random_state = random_state
                 )
                 print("Making pairs")
@@ -309,7 +336,7 @@ def data_for_exp(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
-                    total_pairs=6*40,
+                    total_pairs=config['ge_15']['total_pairs_agg'],
                     random_state=random_state
                 )
         elif resolution == '30m' and country == 'uk':
@@ -321,20 +348,20 @@ def data_for_exp(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
-                    total_pairs=30*60,
+                    total_pairs=config['uk_30']['total_pairs_ind'],
                     random_state=random_state
                 )
             if data_type == 'agg':
                 print("Loading aggregated data")
                 df_train, _ = loader.load_dataset_agg(
-                    num_houses = 10,
+                    num_houses = config['uk_30']['num_houses_agg'],
                 )
                 print("Making pairs")
                 pair_it = LazyPairIterable(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
-                    total_pairs=5*60,
+                    total_pairs=config['uk_30']['total_pairs_agg'],
                     random_state=random_state
                 )
         elif resolution == '60m' and country == 'uk':
@@ -346,20 +373,20 @@ def data_for_exp(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
-                    total_pairs=30*60,
+                    total_pairs=config['uk_60']['total_pairs_ind'],
                     random_state=random_state
                 )            
             if data_type == 'agg':
                 print("Loading aggregated data")
                 df_train, _ = loader.load_dataset_agg(
-                    num_houses = 10, # better < number of ids in each partition
+                    num_houses = config['uk_60']['num_houses_agg'], # better < number of ids in each partition
                 )
                 print("Making pairs")
                 pair_it = LazyPairIterable(
                     df_train,
                     prediction_length=prediction_length,
                     context_length=context_length,
-                    total_pairs=5*60,
+                    total_pairs=config['uk_60']['total_pairs_agg'],
                     random_state=random_state
                 )
         else:

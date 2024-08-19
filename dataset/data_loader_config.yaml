@@ -1,0 +1,42 @@
+
+uk_split_ratio: 1
+
+nl_60:
+  houses_ind: 30
+  total_pairs_ind: 3900
+  num_agg: 3
+  num_houses_agg: 22 # 22
+  total_pairs_agg: 150
+
+ge_60:
+  houses_ind: 6
+  total_pairs_ind: 300
+  num_agg: 1
+  num_houses_agg: 6
+  total_pairs_agg: 50
+
+ge_30:
+  houses_ind: 6
+  total_pairs_ind: 300
+  num_agg: 1
+  num_houses_agg: 6
+  total_pairs_agg: 50
+
+ge_15:
+  houses_ind: 6
+  total_pairs_ind: 300 # 240
+  num_agg: 1
+  num_houses_agg: 6
+  total_pairs_agg: 50 # 240
+
+uk_30:
+  total_pairs_ind: 1800
+  num_houses_agg: 10
+  total_pairs_agg: 600
+
+uk_60:
+  total_pairs_ind: 1800
+  num_houses_agg: 10
+  total_pairs_agg: 600
+
+

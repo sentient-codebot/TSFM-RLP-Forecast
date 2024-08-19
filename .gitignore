@@ -8,3 +8,5 @@ exp/chronos/lightning_logs/
 result/
 /lag-llama
 dataset/_test.py
+.venv
+configs

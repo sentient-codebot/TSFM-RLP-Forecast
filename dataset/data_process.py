@@ -202,7 +202,6 @@ class LoadUKDataset(LoadDataset):
         else:
             # create an empty Dask DataFrame with the same columns as self.data_dd
             df_test = dd.from_pandas(pd.DataFrame(columns=self.data_dd.columns), npartitions=1)
-        
         return df_train, df_test
   
 
@@ -231,28 +230,20 @@ class LoadUKDataset(LoadDataset):
 
         # Define the meta to include the 'group_key' column
         meta = df._meta.assign(group_key=0)
-        raise NotImplementedError(
-            r"""
-            this groupby operation is too expensive, even if it is \
-                only within each parition. 
-            """
-        )
+        
         df = df.map_partitions(create_group_key, meta=meta)
         
         # Step 2: Group by 'datetime' and 'group_key', then sum the 'target' values
         # NOTE: LIMITATION: restrict to within-partition groupby, efficient but not "true and precise".
         def group_and_sum(partition):
-            return partition.groupby(['datetime', 'group_key'])['target'].sum().reset_index()
+            partition.groupby(['datetime', 'group_key'])['target'].sum().reset_index()
+            # algin the column of meta
+            partition['category'] = self.resolution
+            partition['id'] = partition['group_key'].astype('str')
+            partition = partition.drop(columns='group_key')
+            return partition
         
-        result = df.map_partitions(group_and_sum, meta=meta)
-        
-        # [compatibility-only]
-        result['category'] = self.resolution
-        result['id'] = result['group_key'].astype('str')
-        
-        # Drop the 'group_key' column as it's no longer needed
-        result = result.drop(columns=['group_key'])
-        
+        result = df.map_partitions(group_and_sum, meta=meta.drop(columns='group_key'))
         return result
     
     def load_dataset_agg(self, num_houses: int = 3, **kwargs):
@@ -263,9 +254,7 @@ class LoadUKDataset(LoadDataset):
         df_agg_test = self.aggreagte_by_id(df_test, num_houses)
         
         return df_agg_train, df_agg_test
-        
-        
-
+           
 class PairMaker:
     """
     Given a time series dataset, this class generates pairs of time series data for prediction
@@ -296,7 +285,7 @@ class PairMaker:
         
         # check the input
         self._check_input()
-
+        # print(data)
         # check the type of split
         if type_of_split not in ['noverlap', 'overlap']:
             raise ValueError("Type of split should be 'noverlap' or 'overlap'")
@@ -312,8 +301,6 @@ class PairMaker:
         start = 0
         data = data['target']
         for i in range(self.num_pairs):
-            if len(data) < self.window_length:
-                break # no pair can be made 
             if type_of_split == 'overlap':
                 # if data.shape[0] < self.window_length+self.num_pairs+1:
                 #     raise ValueError("The length of the data is not enough for the window length and number of pairs")
@@ -334,16 +321,6 @@ class PairMaker:
                     pairs.append((np.array(window1), np.array(window2)))
                 except IndexError:
                     break
-        
-        # change the pairs to two np.array X and y
-        # X = []
-        # y = []
-        # for pair in pairs:
-        #     X.append(pair[0].values)
-        #     y.append(pair[1].values)
-        
-        # X = np.array(X)
-        # y = np.array(y)
         
         return pairs
 
