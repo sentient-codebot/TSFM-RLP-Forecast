@@ -59,6 +59,7 @@ if __name__ == "__main__":
     
     # -------- Experiment Configuration --------
     exp_id = cf.generate_time_id()
+    print(f"----------------- Experiment ID: {exp_id} -----------------")
     
     for reso, country in reso_country:
         if reso == '60m':
