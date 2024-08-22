@@ -165,7 +165,7 @@ def collate_list(it, batch_size): # collect list
             return
         yield list_x, list_y
         
-def collate_tr(it, batch_size): # collect tensor
+def collate_tensor(it, batch_size): # collect tensor
     import torch
     while True:
         list_x = []
