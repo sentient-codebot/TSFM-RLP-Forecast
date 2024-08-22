@@ -12,21 +12,21 @@ ge_60m:
   houses_ind: 6
   total_pairs_ind: 300
   num_agg: 1
-  num_houses_agg: 6
+  num_houses_agg: 3
   total_pairs_agg: 50
 
 ge_30m:
   houses_ind: 6
   total_pairs_ind: 300
   num_agg: 1
-  num_houses_agg: 6
+  num_houses_agg: 3
   total_pairs_agg: 50
 
 ge_15m:
   houses_ind: 6
   total_pairs_ind: 300 # 240
   num_agg: 1
-  num_houses_agg: 6
+  num_houses_agg: 3
   total_pairs_agg: 50 # 240
 
 uk_30m:
