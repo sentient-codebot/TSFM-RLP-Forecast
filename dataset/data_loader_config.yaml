@@ -1,5 +1,5 @@
 
-global_split_ratio: 0.5
+global_split_ratio: 0
 
 nl_60m:
   houses_ind: 30
