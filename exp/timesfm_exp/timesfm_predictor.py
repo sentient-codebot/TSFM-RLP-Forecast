@@ -84,7 +84,7 @@ if __name__ == "__main__":
             )
             # pair_iterable.total_pairs = 10 # NOTE only for debug
             batch_size = 128
-            pair_it = dl.collate_list(dl.array_to_list(iter(pair_iterable)), batch_size=batch_size)
+            pair_it = dl.collate_list(dl.array_to_list(dl.filter_nan(iter(pair_iterable))), batch_size=batch_size)
             
             # for x, y in pair_it:
             #     print(f'{len(x), len(x[0])}')

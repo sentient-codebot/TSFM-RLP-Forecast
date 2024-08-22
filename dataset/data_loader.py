@@ -139,7 +139,6 @@ def collate_np(pair_iterable, batch_size=120): # collect numpy
     if X_batch:
         yield np.array(X_batch), np.array(y_batch)
 
-
 def array_to_list(it):
     for x, y in it:
         yield x.tolist(), y.tolist()
@@ -149,6 +148,13 @@ def array_to_tensor(it):
     for x, y in it:
         yield torch.tensor(x), torch.tensor(y)
         
+def filter_nan(it):
+    "it: iterator of pair of 1d numpy arrays"
+    for x, y in it:
+        if np.isnan(x).any() or np.isnan(y).any():
+            continue
+        yield x, y
+
 def collate_list(it, batch_size): # collect list
     "collate list into list"
     while True:
