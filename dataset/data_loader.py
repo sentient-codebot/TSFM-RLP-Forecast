@@ -115,7 +115,7 @@ class LazyPairIterable:
     def __next__(self):
         return next(self.__gen)
 
-def batch_generator(pair_iterable, batch_size=120):
+def collate_np(pair_iterable, batch_size=120): # collect numpy
     X_batch = []
     y_batch = []
     
@@ -149,7 +149,7 @@ def array_to_tensor(it):
     for x, y in it:
         yield torch.tensor(x), torch.tensor(y)
         
-def collate_list(it, batch_size):
+def collate_list(it, batch_size): # collect list
     "collate list into list"
     while True:
         list_x = []
@@ -165,7 +165,7 @@ def collate_list(it, batch_size):
             return
         yield list_x, list_y
         
-def collate_fn(it, batch_size):
+def collate_tr(it, batch_size): # collect tensor
     import torch
     while True:
         list_x = []

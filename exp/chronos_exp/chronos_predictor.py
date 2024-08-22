@@ -36,10 +36,10 @@ if __name__ == "__main__":
     
     # ----------------- Experiment Configuration -----------------
     reso_country = [
-            ('60m', 'nl'),
-            ('60m', 'ge'),
-            ('30m', 'ge'),
-            ('15m', 'ge'),
+            # ('60m', 'nl'),
+            # ('60m', 'ge'),
+            # ('30m', 'ge'),
+            # ('15m', 'ge'),
             ('30m', 'uk'),
             ('60m', 'uk'),
         ]
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         elif reso == '15m':
             num_steps_day = 96
         
-        for _type in ['agg', 'ind']:  # 'agg', 
+        for _type in ['agg']:  # 'agg', , 'ind'
             print('--------------------------------------------------')
             print(f"reso: {reso}, country: {country}, type: {_type}")
             print('--------------------------------------------------')
@@ -69,7 +69,7 @@ if __name__ == "__main__":
             )
             # pair_iterable.total_pairs = 10 # NOTE only for debug
             batch_size = 128
-            pair_it = dl.batch_generator(pair_iterable, batch_size)
+            pair_it = dl.collate_np(pair_iterable, batch_size)
             
             data_config = cf.DataConfig(
                 country=country,
@@ -97,7 +97,6 @@ if __name__ == "__main__":
                 forecast = pipeline.predict(_input, num_steps_day, limit_prediction_length=False)
 
                 low, median, high = np.quantile(forecast.numpy(), [0.1, 0.5, 0.9], axis=1)
-                            # report the nan with 0
                 low = np.nan_to_num(low, nan=0)
                 median = np.nan_to_num(median, nan=0)
                 high = np.nan_to_num(high, nan=0)
@@ -139,4 +138,14 @@ if __name__ == "__main__":
             )
             exp_config.append_csv(f'/home/wxia/tsfm/TSFM-RLP-Forecast/exp/chronos_exp/result/{exp_id}.csv')
             # ----------------- Experiment-----------------
+            
+            # ----------------- Plot the Results-----------
+            plt.plot(_input)
+            plt.plot(range(len(_input),len(_input)+len(y) ), y, c='r')
+            plt.plot(range(len(_input),len(_input)+len(y) ), median)
+            plt.savefig('chronos.png')
+            plt.close()
+            
+            
+            
             
