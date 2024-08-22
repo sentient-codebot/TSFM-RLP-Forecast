@@ -72,9 +72,6 @@ if __name__ == "__main__":
             print('--------------------------------------------------')
             print(f"reso: {reso}, country: {country}, type: {_type}")
             print('--------------------------------------------------')
-            if country == 'uk' and _type == 'agg':
-                print('uk agg not implemented.')
-                continue
             # load datastet
             pair_iterable = dl.data_for_exp(
                 resolution = reso,
