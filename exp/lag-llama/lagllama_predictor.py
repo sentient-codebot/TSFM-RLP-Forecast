@@ -23,10 +23,9 @@ from lag_llama.gluon.estimator import LagLlamaEstimator
 
 ckpt_path = os.path.abspath(os.path.join(parent_dir, './lag-llama', './lag-llama.ckpt'))
 
-debug = os.getenv('DEBUG', 'False') == 'True'
-__DEBUG_NUM_UNITS__ = 3
+# debug = os.getenv('DEBUG', 'False') == 'True'
 
-def predict(dataset, prediction_length: int, context_length=32, use_rope_scaling=False, num_samples=100):
+def predict(dataset, prediction_length: int, context_length=32, batch_size=128, use_rope_scaling=False, num_samples=100):
     """A function for Lag-Llama inference.
     Copy from https://colab.research.google.com/drive/1XxrLW9VGPlZDw3efTvUi0hQimgJOwQG6#scrollTo=gyH5Xq9eSvzq&line=1&uniqifier=1
     """
@@ -54,6 +53,7 @@ def predict(dataset, prediction_length: int, context_length=32, use_rope_scaling
         rope_scaling=rope_scaling_arguments if use_rope_scaling else None,
         num_parallel_samples=100, # TODO: maybe change to num_samples
         device=device,
+        batch_size=batch_size,
     )
 
     lightning_module = estimator.create_lightning_module()
@@ -83,9 +83,6 @@ def create_pd_dataset(data, freq):
     """
     num_units, num_intervals = data.shape
 
-    if debug:
-        num_units = __DEBUG_NUM_UNITS__
-
     df_list = []
 
     date_range = pd.date_range(start='2000-01-01', periods=num_intervals, freq=freq)
@@ -107,38 +104,25 @@ def create_pd_dataset(data, freq):
 
     return PandasDataset(df_list, target="target", freq=freq)
 
-def generate_dataset(pair_it, total, freq): #TODO: remove total later
+def generate_dataset(x, y, freq):
     """
-    Generate a dataset for lag-llama predictor.
+    Generate a dataset for lag-llama predictor without progress tracking.
 
     Args:
-        pair_it (iterable): An iterable containing pairs of input and output data.
-        total (int): The total number of pairs in the iterable.
-        freq (str): The frequency of the data.
+        x: input data
+        y: output data
+        freq (str): The frequency of the data
 
     Returns:
         tuple: A tuple containing the PandasDataset dataset, original dataset, and output.
     """
-    _input = []
-    _output = []
-    for x, y in tqdm(pair_it, total=total):
-        _input.append(x.numpy())
-        _output.append(y.numpy())
-    _input = np.stack(_input)
-    _output = np.stack(_output)
     # lag-llama need to include the timesteps in the dataframe that we want to perform prediction
     # so we fill the timesteps with dummy values
-    combined = np.hstack((_input, np.zeros_like(_output)))
+    combined = np.hstack((x, np.zeros_like(y)))
     # combined = np.hstack((_input, _output)) # test the impact of including the target instead of zeros
     input_dataset = create_pd_dataset(combined, freq)
 
-    # fill nan with 0
-    _output = np.nan_to_num(_output)
-
-    if debug:
-        _output = _output[:__DEBUG_NUM_UNITS__]
-
-    return input_dataset, _input, _output
+    return input_dataset
 
 if __name__ == "__main__":
     reso_country = [
@@ -177,7 +161,8 @@ if __name__ == "__main__":
                 prediction_length=num_steps_day,
             )
             # pair_iterable.total_pairs = 10 # NOTE only for debug
-            pair_it = dl.array_to_tensor(iter(pair_iterable))
+            batch_size = 3
+            pair_it = dl.collate_np(dl.filter_nan(iter(pair_iterable)), batch_size)
 
             # ----------------- Experiment Configuration -----------------
             data_config = cf.DataConfig(
@@ -192,22 +177,36 @@ if __name__ == "__main__":
                 prediction_length=foo[1].shape[-1],
             )
 
-            # start the data
-            input_dataset, _, _output = generate_dataset(pair_it, len(pair_iterable), freq)
+            _target = []
+            _input = []
+            forecasts_result = []
+            forecast_quantiles = []
+            count = 0
+            for x, y in tqdm(pair_it, total=len(pair_iterable)//batch_size):
+                count += 1
+                if count > 3:
+                    break
+                _target.extend(y)
+                _input.extend(x)
+                input_dataset = generate_dataset(x, y, freq)
+                # make prediction
+                forecasts, tss = predict(input_dataset, num_steps_day, batch_size=batch_size)
+                for forecast in forecasts:
+                    # we can get median by `forecasts[i].median` as well
+                    forecast_quantiles.append(np.quantile(forecast.samples, [0.1, 0.5, 0.9], axis=0))
+                    forecasts_result.append(forecast.samples)
 
-            # make prediction
-            forecasts, tss = predict(input_dataset, num_steps_day)
-
-            print(len(forecasts))
-            # we can get median by `forecasts[i].median` as well
-            forecast_quantiles = np.array([np.quantile(forecast.samples, [0.1, 0.5, 0.9], axis=0)for forecast in forecasts])
+            _input = np.array(_input)
+            _target = np.array(_target)
+            forecasts_result = np.array(forecasts_result)
+            forecast_quantiles = np.array(forecast_quantiles)
             low, median, high = forecast_quantiles[:, 0, :], forecast_quantiles[:, 1, :], forecast_quantiles[:, 2, :]
 
-            _q_10 = evm.quantile_loss(low, _output, 0.1).mean()
-            _q_50 = evm.quantile_loss(median, _output, 0.5).mean()
-            _q_90 = evm.quantile_loss(high, _output, 0.9).mean()
-            _mae = evm.mae(median, _output)
-            _rmse = evm.rmse(median, _output)
+            _q_10 = evm.quantile_loss(low, _target, 0.1).mean()
+            _q_50 = evm.quantile_loss(median, _target, 0.5).mean()
+            _q_90 = evm.quantile_loss(high, _target, 0.9).mean()
+            _mae = evm.mae(median, _target)
+            _rmse = evm.rmse(median, _target)
 
             eval_metrics = evm.EvaluationMetrics(
                 quantile_loss={
@@ -234,22 +233,30 @@ if __name__ == "__main__":
             )
             exp_config.append_csv(f'result/{exp_id}.csv')
 
-            # Plot first 9 units' predictions
+            # # Plot first 9 units' predictions
             # plt.figure(figsize=(20, 15))
             # date_formater = mdates.DateFormatter('%b, %d')
             # plt.rcParams.update({'font.size': 15})
 
             # # Iterate through the first 9 series, and plot the predicted samples
-            # for idx, (forecast, ts) in islice(enumerate(zip(forecasts, tss)), 9):
+            # for idx, target in enumerate(_target):
+            #     if idx >= 9:
+            #         break
             #     ax = plt.subplot(3, 3, idx + 1)
-            #     peroid_idx = forecast.index
-            #     output = pd.Series(_output[idx], index=peroid_idx)
-            #     plt.plot(ts[:-num_steps_day].to_timestamp(), label="previous")
-            #     plt.plot(output.to_timestamp(), label="target")
-            #     forecast.plot( color='g')
-            #     plt.xticks(rotation=60)
+            #     previous = _input[idx]
+            #     forecast = forecasts_result[idx]
+            #     x = np.append(previous, target)
+            #     ax.plot(range(len(x)), x, label='Actual', color='b', linewidth=2)
+            #     ax.plot(range(len(previous), len(x)), median[idx], label='Median Forecast', color='g', linewidth=2)
+
+            #     ml, mh = np.quantile(forecast, [0.25, 0.75], axis=0)
+            #     ax.fill_between(range(len(previous), len(x)), low[idx], high[idx], color='g', alpha=0.2)
+            #     ax.fill_between(range(len(previous), len(x)), ml, mh, color='g', alpha=0.4)
+
+            #     ax.set_title(f'Series {idx + 1}')
             #     ax.xaxis.set_major_formatter(date_formater)
-            #     ax.set_title(forecast.item_id)
+            #     ax.set_xlabel('Date')
+            #     ax.set_ylabel('Value')
 
             # plt.gcf().tight_layout()
             # plt.legend()
