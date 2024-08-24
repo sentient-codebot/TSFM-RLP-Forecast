@@ -181,11 +181,7 @@ if __name__ == "__main__":
             _input = []
             forecasts_result = []
             forecast_quantiles = []
-            count = 0
             for x, y in tqdm(pair_it, total=len(pair_iterable)//batch_size):
-                count += 1
-                if count > 3:
-                    break
                 _target.extend(y)
                 _input.extend(x)
                 input_dataset = generate_dataset(x, y, freq)
