@@ -161,7 +161,7 @@ if __name__ == "__main__":
                 prediction_length=num_steps_day,
             )
             # pair_iterable.total_pairs = 10 # NOTE only for debug
-            batch_size = 3
+            batch_size = 128
             pair_it = dl.collate_np(dl.filter_nan(iter(pair_iterable)), batch_size)
 
             # ----------------- Experiment Configuration -----------------
