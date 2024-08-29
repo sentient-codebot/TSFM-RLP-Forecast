@@ -250,8 +250,10 @@ def data_for_exp(
                 num_houses = config['num_houses_agg'],
                 random_state = random_state
             )
+            
             print("Making pairs")
-            pair_it = PairIterable(
+            _PairIter = PairIterable if country != 'uk' else LazyPairIterable
+            pair_it =  _PairIter (
                 df_test,
                 prediction_length=prediction_length,
                 context_length=context_length,

@@ -37,9 +37,9 @@ if __name__ == "__main__":
     # ----------------- Experiment Configuration -----------------
     reso_country = [
             ('60m', 'nl'),
-            # ('60m', 'ge'),
-            # ('30m', 'ge'),
-            # ('15m', 'ge'),
+            ('60m', 'ge'),
+            ('30m', 'ge'),
+            ('15m', 'ge'),
             ('30m', 'uk'),
             ('60m', 'uk'),
         ]
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         elif reso == '15m':
             num_steps_day = 96
         
-        for _type in ['agg']:  # 'agg', , 'ind'
+        for _type in ['ind','agg']:  # 'agg', , 'ind'
             print('--------------------------------------------------')
             print(f"reso: {reso}, country: {country}, type: {_type}")
             print('--------------------------------------------------')
@@ -102,10 +102,6 @@ if __name__ == "__main__":
                 median = np.nan_to_num(median, nan=0)
                 high = np.nan_to_num(high, nan=0)
                 
-                print('low, median, high shape', low.shape, median.shape, high.shape)
-                print('input shape', _input.shape)
-                print('target, forecast shape', _target.shape, forecast.shape)
-                    
                 _q_10.append(evm.quantile_loss(low, _target, 0.1).mean())
                 _q_50.append(evm.quantile_loss(median, _target, 0.5).mean())
                 _q_90.append(evm.quantile_loss(high, _target, 0.9).mean())
@@ -113,8 +109,12 @@ if __name__ == "__main__":
                 _rmse.append(evm.rmse(median, _target))
                 
             _q_10, _q_50, _q_90, _mae, _rmse = np.mean(_q_10), np.mean(_q_50), np.mean(_q_90), np.mean(_mae), np.mean(_rmse)
-                
 
+            print('low, median, high shape', low.shape, median.shape, high.shape)
+            print('input shape', _input.shape)
+            print('target, forecast shape', _target.shape, forecast.shape)
+                    
+                    
             eval_metrics = evm.EvaluationMetrics(
                 quantile_loss={
                     '0.1': _q_10,
