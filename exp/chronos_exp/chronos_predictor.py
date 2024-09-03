@@ -19,7 +19,7 @@ import utility.configuration as cf
 
 def chronos_prediction(
     device_map: Union[str, torch.device] = "cpu",
-    model_type: str = "amazon/chronos-t5-small",
+    model_type: str = "amazon/chronos-t5-large",
     torch_dtype: torch.dtype = torch.float32):
   
     # Define the pipeline
@@ -78,7 +78,7 @@ if __name__ == "__main__":
             )
             foo = next(iter(pair_iterable))
             model_config = cf.ModelConfig(
-                model_name="chronos-t5-small",
+                model_name="chronos-t5-large",
                 lookback_window=foo[0].shape[-1],
                 prediction_length=foo[1].shape[-1],
             )
