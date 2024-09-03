@@ -19,7 +19,7 @@ import utility.configuration as cf
 
 def chronos_prediction(
     device_map: Union[str, torch.device] = "cpu",
-    model_type: str = "amazon/chronos-t5-tiny",
+    model_type: str = "amazon/chronos-t5-small",
     torch_dtype: torch.dtype = torch.float32):
   
     # Define the pipeline
@@ -78,7 +78,7 @@ if __name__ == "__main__":
             )
             foo = next(iter(pair_iterable))
             model_config = cf.ModelConfig(
-                model_name="chronos-t5-tiny",
+                model_name="chronos-t5-small",
                 lookback_window=foo[0].shape[-1],
                 prediction_length=foo[1].shape[-1],
             )
@@ -163,8 +163,8 @@ if __name__ == "__main__":
             plt.title(f'Chronos Predictions for {country.capitalize()} ({_type.capitalize()})')
             
             # Add a legend
-            plt.legend()
-            
+            # plt.legend()
+
             # Save the plot
             _path = 'exp/chronos_exp/result/'
             plt.savefig(_path + f'chronos_{country}_{reso}_{_type}.png')

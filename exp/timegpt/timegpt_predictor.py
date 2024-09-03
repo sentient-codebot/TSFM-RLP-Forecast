@@ -76,7 +76,7 @@ if __name__ == "__main__":
             )
             foo = next(iter(pair_iterable))
             model_config = cf.ModelConfig(
-                model_name="timegpt",
+                model_name="timegpt-1-long-horizon",
                 lookback_window=foo[0].shape[-1],
                 prediction_length=foo[1].shape[-1],
             )
@@ -103,6 +103,7 @@ if __name__ == "__main__":
                 forecast_df = nixtla_client.forecast(
                     df=_df ,
                     h=y.shape[1],
+                    model='timegpt-1-long-horizon',
                 )  
                 
                 # evaluate the model
@@ -112,6 +113,7 @@ if __name__ == "__main__":
                 _mae.append(evm.mae(y_hat, y))
                 _rmse.append(evm.rmse(y_hat, y))
             
+            _mae, _rmse = np.mean(_mae), np.mean(_rmse)
             # Output the experiment result
             eval_metrics = evm.EvaluationMetrics(
                 quantile_loss={
