@@ -114,6 +114,23 @@ class LazyPairIterable:
                 
     def __next__(self):
         return next(self.__gen)
+    
+def collate_pandas(pair_iterable, batch_size=120):
+    X_batch = []
+    y_batch = []
+    
+    iterator = iter(pair_iterable)
+    
+    for x, y in iterator:
+        df = pd.DataFrame(np.hstack([x.reshape(1, -1), y.reshape(1, -1)]))
+        x_l = x.reshape(1, -1).shape[1]
+        df.dropna(inplace=True)
+        
+        if not df.empty:
+            x_clean, y_clean = df.iloc[:, :x_l].values, df.iloc[:, x_l:].values
+            X_batch.append(x_clean)
+            y_batch.append(y_clean)
+
 
 def collate_numpy(pair_iterable, batch_size=120): # collect numpy
     X_batch = []

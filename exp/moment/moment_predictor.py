@@ -121,24 +121,13 @@ if __name__ == "__main__":
             
             # ----------------- Plot the Results-----------
             print(x.shape, _target[0, :].shape, out[0, 0, :].detach().numpy().shape)
-            
             plt.plot(range(x.shape[2]), x[0, 0, :], label='Input', color='b')
-            
-            # Create the range for the target and predicted values
             target_range = range(x.shape[2], x.shape[2] + len(_target[0, :]))
-            
-            # Plot the target sequence
             plt.plot(target_range, _target[0, :], c='r', label='Target')
-            
-            # Plot the median prediction
             plt.plot(target_range, out[0, 0, :].detach().numpy(), c='g', label='Median')
-            
-            # Set plot labels and title
             plt.xlabel('Time')
             plt.ylabel('Value')
             plt.title(f'Chronos Predictions for {country.capitalize()} ({_type.capitalize()})')
-            
-            # Save the plot
             _path = 'exp/moment/result/'
             plt.savefig(_path + f'moment_{country}_{reso}_{_type}.png')
             plt.close()
