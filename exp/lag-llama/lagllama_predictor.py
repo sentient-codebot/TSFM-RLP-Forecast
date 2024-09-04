@@ -116,9 +116,12 @@ def generate_dataset(x, y, freq):
     Returns:
         tuple: A tuple containing the PandasDataset dataset, original dataset, and output.
     """
+    x_reshaped = x.reshape(x.shape[0], -1)  # Reshape to (3, 72)
+    y_reshaped = y.reshape(y.shape[0], -1)  # Reshape to (3, 24)
+
     # lag-llama need to include the timesteps in the dataframe that we want to perform prediction
     # so we fill the timesteps with dummy values
-    combined = np.hstack((x, np.zeros_like(y)))
+    combined = np.hstack((x_reshaped, np.zeros_like(y_reshaped)))
     # combined = np.hstack((_input, _output)) # test the impact of including the target instead of zeros
     input_dataset = create_pd_dataset(combined, freq)
 
@@ -162,7 +165,7 @@ if __name__ == "__main__":
             )
             # pair_iterable.total_pairs = 10 # NOTE only for debug
             batch_size = 128
-            pair_it = dl.collate_np(dl.filter_nan(iter(pair_iterable)), batch_size)
+            pair_it = dl.collate_numpy(dl.filter_nan(iter(pair_iterable)), batch_size)
 
             # ----------------- Experiment Configuration -----------------
             data_config = cf.DataConfig(
