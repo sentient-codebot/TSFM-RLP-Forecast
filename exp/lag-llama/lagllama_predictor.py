@@ -26,7 +26,7 @@ ckpt_path = os.path.abspath(os.path.join(parent_dir, './lag-llama', './lag-llama
 debug = os.getenv('DEBUG', 'False') == 'True'
 __DEBUG_NUM_UNITS__ = 1
 
-def predict(dataset, prediction_length: int, context_length=32, use_rope_scaling=False, num_samples=100):
+def predict(dataset, prediction_length: int, context_length=96, use_rope_scaling=False, num_samples=100):
     """A function for Lag-Llama inference.
     Copy from https://colab.research.google.com/drive/1XxrLW9VGPlZDw3efTvUi0hQimgJOwQG6#scrollTo=gyH5Xq9eSvzq&line=1&uniqifier=1
     """

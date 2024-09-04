@@ -1,0 +1,476 @@
+Thu Aug 15 17:56:56 2024       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 550.90.07              Driver Version: 550.90.07      CUDA Version: 12.4     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  Tesla V100-PCIE-16GB           On  |   00000000:AF:00.0 Off |                    0 |
+| N/A   28C    P0             24W /  250W |       1MiB /  16384MiB |      0%   E. Process |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+/appl/cuda/11.6.0/samples/bin/x86_64/linux/release/deviceQuery Starting...
+
+ CUDA Device Query (Runtime API) version (CUDART static linking)
+
+Detected 1 CUDA Capable device(s)
+
+Device 0: "Tesla V100-PCIE-16GB"
+  CUDA Driver Version / Runtime Version          12.4 / 11.6
+  CUDA Capability Major/Minor version number:    7.0
+  Total amount of global memory:                 16144 MBytes (16928342016 bytes)
+  (080) Multiprocessors, (064) CUDA Cores/MP:    5120 CUDA Cores
+  GPU Max Clock rate:                            1380 MHz (1.38 GHz)
+  Memory Clock rate:                             877 Mhz
+  Memory Bus Width:                              4096-bit
+  L2 Cache Size:                                 6291456 bytes
+  Maximum Texture Dimension Size (x,y,z)         1D=(131072), 2D=(131072, 65536), 3D=(16384, 16384, 16384)
+  Maximum Layered 1D Texture Size, (num) layers  1D=(32768), 2048 layers
+  Maximum Layered 2D Texture Size, (num) layers  2D=(32768, 32768), 2048 layers
+  Total amount of constant memory:               65536 bytes
+  Total amount of shared memory per block:       49152 bytes
+  Total shared memory per multiprocessor:        98304 bytes
+  Total number of registers available per block: 65536
+  Warp size:                                     32
+  Maximum number of threads per multiprocessor:  2048
+  Maximum number of threads per block:           1024
+  Max dimension size of a thread block (x,y,z): (1024, 1024, 64)
+  Max dimension size of a grid size    (x,y,z): (2147483647, 65535, 65535)
+  Maximum memory pitch:                          2147483647 bytes
+  Texture alignment:                             512 bytes
+  Concurrent copy and kernel execution:          Yes with 7 copy engine(s)
+  Run time limit on kernels:                     No
+  Integrated GPU sharing Host Memory:            No
+  Support host page-locked memory mapping:       Yes
+  Alignment requirement for Surfaces:            Yes
+  Device has ECC support:                        Enabled
+  Device supports Unified Addressing (UVA):      Yes
+  Device supports Managed Memory:                Yes
+  Device supports Compute Preemption:            Yes
+  Supports Cooperative Kernel Launch:            Yes
+  Supports MultiDevice Co-op Kernel Launch:      Yes
+  Device PCI Domain ID / Bus ID / location ID:   0 / 175 / 0
+  Compute Mode:
+     < Exclusive Process (many threads in one process is able to use ::cudaSetDevice() with this device) >
+
+deviceQuery, CUDA Driver = CUDART, CUDA Driver Version = 12.4, CUDA Runtime Version = 11.6, NumDevs = 1
+Result = PASS
+Python 3.11.7
+
+Defaulting to user installation because normal site-packages is not writeable
+Requirement already satisfied: gluonts<=0.14.4 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (0.14.4)
+Requirement already satisfied: numpy>=1.23.5 in /appl/numpy/1.26.2-python-3.11.7-openblas-0.3.25/lib/python3.11/site-packages (from -r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 2)) (1.26.2)
+Requirement already satisfied: torch>=2.0.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from -r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (2.4.0)
+Requirement already satisfied: wandb in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from -r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (0.17.6)
+Requirement already satisfied: scipy in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from -r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 5)) (1.14.0)
+Collecting pandas>=2.1.4 (from -r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 6))
+  Using cached pandas-2.2.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (19 kB)
+Requirement already satisfied: matplotlib in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from -r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 8)) (3.9.2)
+Requirement already satisfied: huggingface_hub[cli] in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from -r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 7)) (0.24.5)
+  Using cached pandas-2.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (18 kB)
+Requirement already satisfied: pydantic<3,>=1.7 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gluonts<=0.14.4->gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (2.8.2)
+Requirement already satisfied: tqdm~=4.23 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gluonts<=0.14.4->gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (4.66.5)
+Requirement already satisfied: toolz~=0.10 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gluonts<=0.14.4->gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (0.12.1)
+Requirement already satisfied: typing-extensions~=4.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gluonts<=0.14.4->gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (4.12.2)
+Requirement already satisfied: filelock in /appl/python/3.11.7/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (3.13.1)
+Requirement already satisfied: sympy in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (1.13.2)
+Requirement already satisfied: networkx in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (3.3)
+Requirement already satisfied: jinja2 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (3.1.4)
+Requirement already satisfied: fsspec in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (2024.6.1)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu12==12.1.105 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (12.1.105)
+Requirement already satisfied: nvidia-cuda-runtime-cu12==12.1.105 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (12.1.105)
+Requirement already satisfied: nvidia-cuda-cupti-cu12==12.1.105 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (12.1.105)
+Requirement already satisfied: nvidia-cudnn-cu12==9.1.0.70 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (9.1.0.70)
+Requirement already satisfied: nvidia-cublas-cu12==12.1.3.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (12.1.3.1)
+Requirement already satisfied: nvidia-cufft-cu12==11.0.2.54 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (11.0.2.54)
+Requirement already satisfied: nvidia-curand-cu12==10.3.2.106 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (10.3.2.106)
+Requirement already satisfied: nvidia-cusolver-cu12==11.4.5.107 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (11.4.5.107)
+Requirement already satisfied: nvidia-cusparse-cu12==12.1.0.106 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (12.1.0.106)
+Requirement already satisfied: nvidia-nccl-cu12==2.20.5 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (2.20.5)
+Requirement already satisfied: nvidia-nvtx-cu12==12.1.105 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (12.1.105)
+Requirement already satisfied: triton==3.0.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (3.0.0)
+Requirement already satisfied: nvidia-nvjitlink-cu12 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from nvidia-cusolver-cu12==11.4.5.107->torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (12.6.20)
+Requirement already satisfied: click!=8.0.0,>=7.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (8.1.7)
+Requirement already satisfied: docker-pycreds>=0.4.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (0.4.0)
+Requirement already satisfied: gitpython!=3.1.29,>=1.0.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (3.1.43)
+Requirement already satisfied: platformdirs in /appl/python/3.11.7/lib/python3.11/site-packages (from wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (4.1.0)
+Requirement already satisfied: protobuf!=4.21.0,<6,>=3.19.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (5.27.3)
+Requirement already satisfied: psutil>=5.0.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (6.0.0)
+Requirement already satisfied: pyyaml in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (6.0.2)
+Requirement already satisfied: requests<3,>=2.0.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (2.32.3)
+Requirement already satisfied: sentry-sdk>=1.0.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (2.13.0)
+Requirement already satisfied: setproctitle in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (1.3.3)
+Requirement already satisfied: setuptools in /appl/python/3.11.7/lib/python3.11/site-packages (from wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (65.5.0)
+Requirement already satisfied: python-dateutil>=2.8.2 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from pandas>=2.1.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 6)) (2.8.2)
+Requirement already satisfied: pytz>=2020.1 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from pandas>=2.1.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 6)) (2023.3.post1)
+Requirement already satisfied: tzdata>=2022.1 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from pandas>=2.1.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 6)) (2023.3)
+Requirement already satisfied: packaging>=20.9 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from huggingface_hub[cli]->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 7)) (23.2)
+Requirement already satisfied: InquirerPy==0.3.4 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from huggingface_hub[cli]->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 7)) (0.3.4)
+Requirement already satisfied: pfzy<0.4.0,>=0.3.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from InquirerPy==0.3.4->huggingface_hub[cli]->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 7)) (0.3.4)
+Requirement already satisfied: prompt-toolkit<4.0.0,>=3.0.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from InquirerPy==0.3.4->huggingface_hub[cli]->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 7)) (3.0.47)
+Requirement already satisfied: contourpy>=1.0.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from matplotlib->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 8)) (1.2.1)
+Requirement already satisfied: cycler>=0.10 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from matplotlib->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 8)) (0.12.1)
+Requirement already satisfied: fonttools>=4.22.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from matplotlib->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 8)) (4.53.1)
+Requirement already satisfied: kiwisolver>=1.3.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from matplotlib->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 8)) (1.4.5)
+Requirement already satisfied: pillow>=8 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from matplotlib->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 8)) (10.4.0)
+Requirement already satisfied: pyparsing>=2.3.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from matplotlib->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 8)) (3.1.2)
+Requirement already satisfied: lightning<2.2,>=2.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (2.1.4)
+Requirement already satisfied: pytorch-lightning<2.2,>=2.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (2.1.4)
+Requirement already satisfied: six>=1.4.0 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from docker-pycreds>=0.4.0->wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (1.16.0)
+Requirement already satisfied: gitdb<5,>=4.0.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gitpython!=3.1.29,>=1.0.0->wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (4.0.11)
+Requirement already satisfied: lightning-utilities<2.0,>=0.8.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (0.11.6)
+Requirement already satisfied: torchmetrics<3.0,>=0.7.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (1.4.1)
+Requirement already satisfied: annotated-types>=0.4.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from pydantic<3,>=1.7->gluonts<=0.14.4->gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (0.7.0)
+Requirement already satisfied: pydantic-core==2.20.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from pydantic<3,>=1.7->gluonts<=0.14.4->gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (2.20.1)
+Requirement already satisfied: charset-normalizer<4,>=2 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from requests<3,>=2.0.0->wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (3.3.2)
+Requirement already satisfied: idna<4,>=2.5 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from requests<3,>=2.0.0->wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (3.7)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from requests<3,>=2.0.0->wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (2.2.2)
+Requirement already satisfied: certifi>=2017.4.17 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from requests<3,>=2.0.0->wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (2024.7.4)
+Requirement already satisfied: MarkupSafe>=2.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from jinja2->torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (2.1.5)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from sympy->torch>=2.0.0->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 3)) (1.3.0)
+Requirement already satisfied: aiohttp!=4.0.0a0,!=4.0.0a1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from fsspec[http]<2025.0,>=2022.5.0->lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (3.10.3)
+Requirement already satisfied: smmap<6,>=3.0.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gitdb<5,>=4.0.1->gitpython!=3.1.29,>=1.0.0->wandb->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 4)) (5.0.1)
+Requirement already satisfied: wcwidth in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from prompt-toolkit<4.0.0,>=3.0.1->InquirerPy==0.3.4->huggingface_hub[cli]->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 7)) (0.2.13)
+Requirement already satisfied: aiohappyeyeballs>=2.3.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (2.3.5)
+Requirement already satisfied: aiosignal>=1.1.2 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (1.3.1)
+Requirement already satisfied: attrs>=17.3.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (24.2.0)
+Requirement already satisfied: frozenlist>=1.1.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (1.4.1)
+Requirement already satisfied: multidict<7.0,>=4.5 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (6.0.5)
+Requirement already satisfied: yarl<2.0,>=1.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->-r /zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama/requirements.txt (line 1)) (1.9.4)
+Using cached pandas-2.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (12.2 MB)
+Installing collected packages: pandas
+Successfully installed pandas-2.1.4
+Defaulting to user installation because normal site-packages is not writeable
+Obtaining file:///zhome/a4/f/202251/projects/TSFM-RLP-Forecast/lag-llama
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Requirement already satisfied: gluonts<=0.14.4 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gluonts[torch]<=0.14.4->lag-llama==0.1.0) (0.14.4)
+Requirement already satisfied: numpy>=1.23.5 in /appl/numpy/1.26.2-python-3.11.7-openblas-0.3.25/lib/python3.11/site-packages (from lag-llama==0.1.0) (1.26.2)
+Requirement already satisfied: torch>=2.0.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from lag-llama==0.1.0) (2.4.0)
+Requirement already satisfied: wandb in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from lag-llama==0.1.0) (0.17.6)
+Requirement already satisfied: scipy in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from lag-llama==0.1.0) (1.14.0)
+Collecting pandas>=2.1.4 (from lag-llama==0.1.0)
+  Using cached pandas-2.2.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (19 kB)
+Requirement already satisfied: huggingface-hub[cli] in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from lag-llama==0.1.0) (0.24.5)
+Requirement already satisfied: matplotlib in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from lag-llama==0.1.0) (3.9.2)
+  Using cached pandas-2.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (18 kB)
+Requirement already satisfied: pydantic<3,>=1.7 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gluonts<=0.14.4->gluonts[torch]<=0.14.4->lag-llama==0.1.0) (2.8.2)
+Requirement already satisfied: tqdm~=4.23 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gluonts<=0.14.4->gluonts[torch]<=0.14.4->lag-llama==0.1.0) (4.66.5)
+Requirement already satisfied: toolz~=0.10 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gluonts<=0.14.4->gluonts[torch]<=0.14.4->lag-llama==0.1.0) (0.12.1)
+Requirement already satisfied: typing-extensions~=4.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gluonts<=0.14.4->gluonts[torch]<=0.14.4->lag-llama==0.1.0) (4.12.2)
+Requirement already satisfied: lightning<2.2,>=2.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gluonts[torch]<=0.14.4->lag-llama==0.1.0) (2.1.4)
+Requirement already satisfied: pytorch-lightning<2.2,>=2.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gluonts[torch]<=0.14.4->lag-llama==0.1.0) (2.1.4)
+Requirement already satisfied: python-dateutil>=2.8.2 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from pandas>=2.1.4->lag-llama==0.1.0) (2.8.2)
+Requirement already satisfied: pytz>=2020.1 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from pandas>=2.1.4->lag-llama==0.1.0) (2023.3.post1)
+Requirement already satisfied: tzdata>=2022.1 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from pandas>=2.1.4->lag-llama==0.1.0) (2023.3)
+Requirement already satisfied: filelock in /appl/python/3.11.7/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (3.13.1)
+Requirement already satisfied: sympy in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (1.13.2)
+Requirement already satisfied: networkx in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (3.3)
+Requirement already satisfied: jinja2 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (3.1.4)
+Requirement already satisfied: fsspec in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (2024.6.1)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu12==12.1.105 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (12.1.105)
+Requirement already satisfied: nvidia-cuda-runtime-cu12==12.1.105 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (12.1.105)
+Requirement already satisfied: nvidia-cuda-cupti-cu12==12.1.105 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (12.1.105)
+Requirement already satisfied: nvidia-cudnn-cu12==9.1.0.70 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (9.1.0.70)
+Requirement already satisfied: nvidia-cublas-cu12==12.1.3.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (12.1.3.1)
+Requirement already satisfied: nvidia-cufft-cu12==11.0.2.54 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (11.0.2.54)
+Requirement already satisfied: nvidia-curand-cu12==10.3.2.106 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (10.3.2.106)
+Requirement already satisfied: nvidia-cusolver-cu12==11.4.5.107 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (11.4.5.107)
+Requirement already satisfied: nvidia-cusparse-cu12==12.1.0.106 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (12.1.0.106)
+Requirement already satisfied: nvidia-nccl-cu12==2.20.5 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (2.20.5)
+Requirement already satisfied: nvidia-nvtx-cu12==12.1.105 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (12.1.105)
+Requirement already satisfied: triton==3.0.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from torch>=2.0.0->lag-llama==0.1.0) (3.0.0)
+Requirement already satisfied: nvidia-nvjitlink-cu12 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from nvidia-cusolver-cu12==11.4.5.107->torch>=2.0.0->lag-llama==0.1.0) (12.6.20)
+Requirement already satisfied: packaging>=20.9 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from huggingface-hub[cli]->lag-llama==0.1.0) (23.2)
+Requirement already satisfied: pyyaml>=5.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from huggingface-hub[cli]->lag-llama==0.1.0) (6.0.2)
+Requirement already satisfied: requests in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from huggingface-hub[cli]->lag-llama==0.1.0) (2.32.3)
+Requirement already satisfied: InquirerPy==0.3.4 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from huggingface-hub[cli]->lag-llama==0.1.0) (0.3.4)
+Requirement already satisfied: pfzy<0.4.0,>=0.3.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from InquirerPy==0.3.4->huggingface-hub[cli]->lag-llama==0.1.0) (0.3.4)
+Requirement already satisfied: prompt-toolkit<4.0.0,>=3.0.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from InquirerPy==0.3.4->huggingface-hub[cli]->lag-llama==0.1.0) (3.0.47)
+Requirement already satisfied: contourpy>=1.0.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from matplotlib->lag-llama==0.1.0) (1.2.1)
+Requirement already satisfied: cycler>=0.10 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from matplotlib->lag-llama==0.1.0) (0.12.1)
+Requirement already satisfied: fonttools>=4.22.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from matplotlib->lag-llama==0.1.0) (4.53.1)
+Requirement already satisfied: kiwisolver>=1.3.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from matplotlib->lag-llama==0.1.0) (1.4.5)
+Requirement already satisfied: pillow>=8 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from matplotlib->lag-llama==0.1.0) (10.4.0)
+Requirement already satisfied: pyparsing>=2.3.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from matplotlib->lag-llama==0.1.0) (3.1.2)
+Requirement already satisfied: click!=8.0.0,>=7.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->lag-llama==0.1.0) (8.1.7)
+Requirement already satisfied: docker-pycreds>=0.4.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->lag-llama==0.1.0) (0.4.0)
+Requirement already satisfied: gitpython!=3.1.29,>=1.0.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->lag-llama==0.1.0) (3.1.43)
+Requirement already satisfied: platformdirs in /appl/python/3.11.7/lib/python3.11/site-packages (from wandb->lag-llama==0.1.0) (4.1.0)
+Requirement already satisfied: protobuf!=4.21.0,<6,>=3.19.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->lag-llama==0.1.0) (5.27.3)
+Requirement already satisfied: psutil>=5.0.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->lag-llama==0.1.0) (6.0.0)
+Requirement already satisfied: sentry-sdk>=1.0.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->lag-llama==0.1.0) (2.13.0)
+Requirement already satisfied: setproctitle in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from wandb->lag-llama==0.1.0) (1.3.3)
+Requirement already satisfied: setuptools in /appl/python/3.11.7/lib/python3.11/site-packages (from wandb->lag-llama==0.1.0) (65.5.0)
+Requirement already satisfied: six>=1.4.0 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from docker-pycreds>=0.4.0->wandb->lag-llama==0.1.0) (1.16.0)
+Requirement already satisfied: gitdb<5,>=4.0.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gitpython!=3.1.29,>=1.0.0->wandb->lag-llama==0.1.0) (4.0.11)
+Requirement already satisfied: lightning-utilities<2.0,>=0.8.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->lag-llama==0.1.0) (0.11.6)
+Requirement already satisfied: torchmetrics<3.0,>=0.7.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->lag-llama==0.1.0) (1.4.1)
+Requirement already satisfied: annotated-types>=0.4.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from pydantic<3,>=1.7->gluonts<=0.14.4->gluonts[torch]<=0.14.4->lag-llama==0.1.0) (0.7.0)
+Requirement already satisfied: pydantic-core==2.20.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from pydantic<3,>=1.7->gluonts<=0.14.4->gluonts[torch]<=0.14.4->lag-llama==0.1.0) (2.20.1)
+Requirement already satisfied: charset-normalizer<4,>=2 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from requests->huggingface-hub[cli]->lag-llama==0.1.0) (3.3.2)
+Requirement already satisfied: idna<4,>=2.5 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from requests->huggingface-hub[cli]->lag-llama==0.1.0) (3.7)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from requests->huggingface-hub[cli]->lag-llama==0.1.0) (2.2.2)
+Requirement already satisfied: certifi>=2017.4.17 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from requests->huggingface-hub[cli]->lag-llama==0.1.0) (2024.7.4)
+Requirement already satisfied: MarkupSafe>=2.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from jinja2->torch>=2.0.0->lag-llama==0.1.0) (2.1.5)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from sympy->torch>=2.0.0->lag-llama==0.1.0) (1.3.0)
+Requirement already satisfied: aiohttp!=4.0.0a0,!=4.0.0a1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from fsspec[http]<2025.0,>=2022.5.0->lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->lag-llama==0.1.0) (3.10.3)
+Requirement already satisfied: smmap<6,>=3.0.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from gitdb<5,>=4.0.1->gitpython!=3.1.29,>=1.0.0->wandb->lag-llama==0.1.0) (5.0.1)
+Requirement already satisfied: wcwidth in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from prompt-toolkit<4.0.0,>=3.0.1->InquirerPy==0.3.4->huggingface-hub[cli]->lag-llama==0.1.0) (0.2.13)
+Requirement already satisfied: aiohappyeyeballs>=2.3.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->lag-llama==0.1.0) (2.3.5)
+Requirement already satisfied: aiosignal>=1.1.2 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->lag-llama==0.1.0) (1.3.1)
+Requirement already satisfied: attrs>=17.3.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->lag-llama==0.1.0) (24.2.0)
+Requirement already satisfied: frozenlist>=1.1.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->lag-llama==0.1.0) (1.4.1)
+Requirement already satisfied: multidict<7.0,>=4.5 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->lag-llama==0.1.0) (6.0.5)
+Requirement already satisfied: yarl<2.0,>=1.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning<2.2,>=2.0->gluonts[torch]<=0.14.4->lag-llama==0.1.0) (1.9.4)
+Using cached pandas-2.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (12.2 MB)
+Building wheels for collected packages: lag-llama
+  Building editable for lag-llama (pyproject.toml): started
+  Building editable for lag-llama (pyproject.toml): finished with status 'done'
+  Created wheel for lag-llama: filename=lag_llama-0.1.0-0.editable-py3-none-any.whl size=14088 sha256=7e7f9ae9c49bd74f33365f978f6da207da3a7fb05b291b6abb2013b09feb4562
+  Stored in directory: /tmp/pip-ephem-wheel-cache-je32zdbf/wheels/28/1e/18/b055034b63144d9494ac8f71b100ff7bf76766fa6d0a8c349b
+Successfully built lag-llama
+Installing collected packages: pandas, lag-llama
+  Attempting uninstall: lag-llama
+    Found existing installation: lag-llama 0.1.0
+    Uninstalling lag-llama-0.1.0:
+      Successfully uninstalled lag-llama-0.1.0
+Successfully installed lag-llama-0.1.0 pandas-2.1.4
+Defaulting to user installation because normal site-packages is not writeable
+Requirement already satisfied: dask[dataframe] in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (2024.8.0)
+Requirement already satisfied: click>=8.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from dask[dataframe]) (8.1.7)
+Requirement already satisfied: cloudpickle>=1.5.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from dask[dataframe]) (3.0.0)
+Requirement already satisfied: fsspec>=2021.09.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from dask[dataframe]) (2024.6.1)
+Requirement already satisfied: packaging>=20.0 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from dask[dataframe]) (23.2)
+Requirement already satisfied: partd>=1.4.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from dask[dataframe]) (1.4.2)
+Requirement already satisfied: pyyaml>=5.3.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from dask[dataframe]) (6.0.2)
+Requirement already satisfied: toolz>=0.10.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from dask[dataframe]) (0.12.1)
+Requirement already satisfied: importlib-metadata>=4.13.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from dask[dataframe]) (8.2.0)
+Requirement already satisfied: pandas>=2.0 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from dask[dataframe]) (2.1.3)
+Requirement already satisfied: dask-expr<1.2,>=1.1 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from dask[dataframe]) (1.1.10)
+Requirement already satisfied: pyarrow>=7.0.0 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from dask-expr<1.2,>=1.1->dask[dataframe]) (17.0.0)
+Requirement already satisfied: zipp>=0.5 in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from importlib-metadata>=4.13.0->dask[dataframe]) (3.20.0)
+Requirement already satisfied: numpy<2,>=1.23.2 in /appl/numpy/1.26.2-python-3.11.7-openblas-0.3.25/lib/python3.11/site-packages (from pandas>=2.0->dask[dataframe]) (1.26.2)
+Requirement already satisfied: python-dateutil>=2.8.2 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from pandas>=2.0->dask[dataframe]) (2.8.2)
+Requirement already satisfied: pytz>=2020.1 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from pandas>=2.0->dask[dataframe]) (2023.3.post1)
+Requirement already satisfied: tzdata>=2022.1 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from pandas>=2.0->dask[dataframe]) (2023.3)
+Requirement already satisfied: locket in /zhome/a4/f/202251/.local/lib/python3.11/site-packages (from partd>=1.4.0->dask[dataframe]) (1.0.0)
+Requirement already satisfied: six>=1.5 in /appl/pandas/2.1.3-numpy-1.26.2-python-3.11.7/lib/python3.11/site-packages (from python-dateutil>=2.8.2->pandas>=2.0->dask[dataframe]) (1.16.0)
+--------------------------------------------------
+reso: 60m, country: nl, type: ind
+--------------------------------------------------
+Loading individual data
+Total pairs used: 1800
+Total available pairs: 3900
+1800
+reso: 60m, country: nl, type: ind
+q_10_loss: 0.024937412352807428
+q_50_loss: 0.07776277230281109
+q_90_loss: 0.08999913667497789
+mae_loss: 0.15552554460562218
+rmse_loss: 0.3317017857483723
+exp_id,data_country,data_aggregation_type,data_resolution,data_note,model_model_name,model_lookback_window,model_prediction_length,result_quantile_loss_0.1,result_quantile_loss_0.5,result_quantile_loss_0.9,result_mae,result_mse,result_rmse
+20240815-1047,nl,ind,60m,,lag-llama,72,24,0.024937412352807428,0.07776277230281109,0.08999913667497789,0.15552554460562218,-1.0,0.3317017857483723
+--------------------------------------------------
+reso: 60m, country: nl, type: agg
+--------------------------------------------------
+Loading aggregated data
+Making pairs
+Total pairs used: 1320
+Total available pairs: 150
+Warning: total available pairs is 150, less than total pairs required 1320
+150
+reso: 60m, country: nl, type: agg
+q_10_loss: 0.4878575007553005
+q_50_loss: 0.9891251761153237
+q_90_loss: 0.5450291747232173
+mae_loss: 1.9782503522306474
+rmse_loss: 2.7907777440971637
+exp_id,data_country,data_aggregation_type,data_resolution,data_note,model_model_name,model_lookback_window,model_prediction_length,result_quantile_loss_0.1,result_quantile_loss_0.5,result_quantile_loss_0.9,result_mae,result_mse,result_rmse
+20240815-1047,nl,agg,60m,,lag-llama,72,24,0.4878575007553005,0.9891251761153237,0.5450291747232173,1.9782503522306474,-1.0,2.7907777440971637
+--------------------------------------------------
+reso: 60m, country: ge, type: ind
+--------------------------------------------------
+Loading individual data
+Making pairs
+Total pairs used: 420
+Total available pairs: 300
+Warning: total available pairs is 300, less than total pairs required 420
+300
+reso: 60m, country: ge, type: ind
+q_10_loss: 0.14894103757013735
+q_50_loss: 0.3533012991984135
+q_90_loss: 0.21883686635369587
+mae_loss: 0.706602598396827
+rmse_loss: 1.3986030053439262
+exp_id,data_country,data_aggregation_type,data_resolution,data_note,model_model_name,model_lookback_window,model_prediction_length,result_quantile_loss_0.1,result_quantile_loss_0.5,result_quantile_loss_0.9,result_mae,result_mse,result_rmse
+20240815-1047,ge,ind,60m,,lag-llama,72,24,0.14894103757013735,0.3533012991984135,0.21883686635369587,0.706602598396827,-1.0,1.3986030053439262
+--------------------------------------------------
+reso: 60m, country: ge, type: agg
+--------------------------------------------------
+Loading aggregated data
+Making pairs
+Total pairs used: 360
+Total available pairs: 50
+Warning: total available pairs is 50, less than total pairs required 360
+50
+reso: 60m, country: ge, type: agg
+q_10_loss: 2.095317213546756
+q_50_loss: 4.07905758315047
+q_90_loss: 1.9704717547914117
+mae_loss: 8.15811516630094
+rmse_loss: 13.255650537431908
+exp_id,data_country,data_aggregation_type,data_resolution,data_note,model_model_name,model_lookback_window,model_prediction_length,result_quantile_loss_0.1,result_quantile_loss_0.5,result_quantile_loss_0.9,result_mae,result_mse,result_rmse
+20240815-1047,ge,agg,60m,,lag-llama,72,24,2.095317213546756,4.07905758315047,1.9704717547914117,8.15811516630094,-1.0,13.255650537431908
+--------------------------------------------------
+reso: 30m, country: ge, type: ind
+--------------------------------------------------
+Loading individual data
+Making pairs
+Total pairs used: 420
+Total available pairs: 300
+Warning: total available pairs is 300, less than total pairs required 420
+300
+reso: 30m, country: ge, type: ind
+q_10_loss: 0.08042398586943228
+q_50_loss: 0.14198883208532098
+q_90_loss: 0.08838936885951408
+mae_loss: 0.28397766417064196
+rmse_loss: 0.5862879610296133
+exp_id,data_country,data_aggregation_type,data_resolution,data_note,model_model_name,model_lookback_window,model_prediction_length,result_quantile_loss_0.1,result_quantile_loss_0.5,result_quantile_loss_0.9,result_mae,result_mse,result_rmse
+20240815-1047,ge,ind,30m,,lag-llama,144,48,0.08042398586943228,0.14198883208532098,0.08838936885951408,0.28397766417064196,-1.0,0.5862879610296133
+--------------------------------------------------
+reso: 30m, country: ge, type: agg
+--------------------------------------------------
+Loading aggregated data
+Making pairs
+Total pairs used: 420
+Total available pairs: 50
+Warning: total available pairs is 50, less than total pairs required 420
+50
+reso: 30m, country: ge, type: agg
+q_10_loss: 0.9716651223424666
+q_50_loss: 1.4638175056617506
+q_90_loss: 1.0077601728837147
+mae_loss: 2.9276350113235012
+rmse_loss: 4.471645324883739
+exp_id,data_country,data_aggregation_type,data_resolution,data_note,model_model_name,model_lookback_window,model_prediction_length,result_quantile_loss_0.1,result_quantile_loss_0.5,result_quantile_loss_0.9,result_mae,result_mse,result_rmse
+20240815-1047,ge,agg,30m,,lag-llama,144,48,0.9716651223424666,1.4638175056617506,1.0077601728837147,2.9276350113235012,-1.0,4.471645324883739
+--------------------------------------------------
+reso: 15m, country: ge, type: ind
+--------------------------------------------------
+Loading individual data
+Making pairs
+Total pairs used: 240
+Total available pairs: 300
+240
+reso: 15m, country: ge, type: ind
+q_10_loss: 0.040536409151121534
+q_50_loss: 0.08921486917309952
+q_90_loss: 0.06661485045757384
+mae_loss: 0.17842973834619905
+rmse_loss: 0.3443107280295578
+exp_id,data_country,data_aggregation_type,data_resolution,data_note,model_model_name,model_lookback_window,model_prediction_length,result_quantile_loss_0.1,result_quantile_loss_0.5,result_quantile_loss_0.9,result_mae,result_mse,result_rmse
+20240815-1047,ge,ind,15m,,lag-llama,288,96,0.040536409151121534,0.08921486917309952,0.06661485045757384,0.17842973834619905,-1.0,0.3443107280295578
+--------------------------------------------------
+reso: 15m, country: ge, type: agg
+--------------------------------------------------
+Loading aggregated data
+Making pairs
+Total pairs used: 240
+Total available pairs: 50
+Warning: total available pairs is 50, less than total pairs required 240
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@hpc.dtu.dk>
+Subject: Job 22405801: <testjob> in cluster <dcc> Exited
+
+Job <testjob> was submitted from host <hpclogin1> by user <s232293> in cluster <dcc> at Thu Aug 15 17:56:54 2024
+Job was executed on host(s) <4*n-62-20-4>, in queue <gpuv100>, as user <s232293> in cluster <dcc> at Thu Aug 15 17:56:54 2024
+</zhome/a4/f/202251> was used as the home directory.
+</zhome/a4/f/202251/projects/TSFM-RLP-Forecast> was used as the working directory.
+Started at Thu Aug 15 17:56:54 2024
+Terminated at Thu Aug 15 18:19:49 2024
+Results reported at Thu Aug 15 18:19:49 2024
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#!/bin/bash
+### General options
+#BSUB -q gpuv100
+### -- set the job Name --
+#BSUB -J testjob
+### -- ask for number of cores (default: 1) --
+#BSUB -n 4
+### -- Select the resources: 1 gpu in exclusive process mode --
+#BSUB -gpu "num=1:mode=exclusive_process"
+### -- set walltime limit: hh:mm --  maximum 24 hours for GPU-queues right now
+#BSUB -W 1:00
+#BSUB -W 50
+# request 5GB of system-memory
+#BSUB -R "rusage[mem=4096]"
+### -- Specify the output and error file. %J is the job-id --
+### -- -o and -e mean append, -oo and -eo mean overwrite --
+#BSUB -o gpu_%J.out
+#BSUB -e gpu_%J.err
+
+# Load the cuda module
+module load cuda/11.6
+module load pandas/2.1.3-python-3.11.7
+module load cuda/11.6
+
+nvidia-smi
+/appl/cuda/11.6.0/samples/bin/x86_64/linux/release/deviceQuery
+# define the driver name to use
+# valid values: matmult_c.nvc++, matmult_f.nvc++
+EXPORT CUDA_VISIBLE_DEVICES=0,1
+EXPORT DEBUG=TRUE
+# load module for shared cuda libraries
+# module load /appl9/nvhpc/2023_2311/modulefiles/nvhpc-nompi/23.11
+python3 --version
+sh ./exp/lag-llama/run.sh
+python3 ./exp/lag-llama/lagllama_predictor.py
+
+------------------------------------------------------------
+
+TERM_MEMLIMIT: job killed after reaching LSF memory usage limit.
+Exited with exit code 137.
+
+Resource usage summary:
+
+    CPU time :                                   1305.00 sec.
+    Max Memory :                                 16384 MB
+    Average Memory :                             713.83 MB
+    Total Requested Memory :                     16384.00 MB
+    Delta Memory :                               0.00 MB
+    Max Swap :                                   2 MB
+    Max Processes :                              5
+    Max Threads :                                21
+    Run time :                                   1412 sec.
+    Turnaround time :                            1375 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file <gpu_22405801.err> for stderr output of this job.
+
