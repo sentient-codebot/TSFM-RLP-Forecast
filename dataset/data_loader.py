@@ -1,12 +1,15 @@
 import os 
 import sys
+from typing import Dict
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
 
 # import torch
 import numpy as np
 import pandas as pd
+import dask.dataframe as dd
 from tqdm import tqdm
+import yaml
 
 import dataset.data_process as dp
 
@@ -67,6 +70,92 @@ class PairIterable:
     def __next__(self):
         return next(self.__gen)
     
+class LazyPairIterable:
+    def __init__(
+        self,
+        df: dd.DataFrame,
+        prediction_length: int = 24,
+        context_length: int = 72,
+        total_pairs: int = 1800,
+        random_state: int = 0000,
+    ):
+        self.pair_maker = dp.PairMaker(
+            window_length=prediction_length+context_length,
+            window_split_ratio=(context_length)/float(context_length+prediction_length),
+            random_state=random_state
+        )
+        # NOTE
+        #   df's partitions were re-indexed. 
+        self.df = df
+        self.total_pairs = total_pairs
+        print('Total pairs specified:', self.total_pairs)
+        
+    def __len__(self):
+        return self.total_pairs
+    
+    def __iter__(self):
+        self.__gen = self.__create_generator()
+        return self
+    
+    def __create_generator(self):
+        _pair_count = 0
+        for idx_row_group in range(self.df.npartitions):
+            # make pairs
+            row_group = self.df.get_partition(idx_row_group).compute()
+            pairs = self.pair_maker.make_pairs(
+                row_group,
+                'noverlap'
+            )
+            for pair in pairs:
+                _pair_count += 1
+                yield pair
+                if _pair_count == self.total_pairs:
+                    return
+                
+    def __next__(self):
+        return next(self.__gen)
+    
+def collate_pandas(pair_iterable, batch_size=120):
+    X_batch = []
+    y_batch = []
+    
+    iterator = iter(pair_iterable)
+    
+    for x, y in iterator:
+        df = pd.DataFrame(np.hstack([x.reshape(1, -1), y.reshape(1, -1)]))
+        x_l = x.reshape(1, -1).shape[1]
+        df.dropna(inplace=True)
+        
+        if not df.empty:
+            x_clean, y_clean = df.iloc[:, :x_l].values, df.iloc[:, x_l:].values
+            X_batch.append(x_clean)
+            y_batch.append(y_clean)
+
+
+def collate_numpy(pair_iterable, batch_size=120): # collect numpy
+    X_batch = []
+    y_batch = []
+    
+    iterator = iter(pair_iterable)
+    
+    for x, y in iterator:
+        df = pd.DataFrame(np.hstack([x.reshape(1, -1), y.reshape(1, -1)]))
+        x_l = x.reshape(1, -1).shape[1]
+        df.dropna(inplace=True)
+        
+        if not df.empty:
+            x_clean, y_clean = df.iloc[:, :x_l].values, df.iloc[:, x_l:].values
+            X_batch.append(x_clean)
+            y_batch.append(y_clean)
+        
+        if len(X_batch) == batch_size:
+            yield np.array(X_batch), np.array(y_batch)
+            X_batch = []
+            y_batch = []
+            
+    if X_batch:
+        yield np.array(X_batch), np.array(y_batch)
+
 def array_to_list(it):
     for x, y in it:
         yield x.tolist(), y.tolist()
@@ -76,7 +165,30 @@ def array_to_tensor(it):
     for x, y in it:
         yield torch.tensor(x), torch.tensor(y)
         
-def collate_fn(it, batch_size):
+def filter_nan(it):
+    "it: iterator of pair of 1d numpy arrays"
+    for x, y in it:
+        if np.isnan(x).any() or np.isnan(y).any():
+            continue
+        yield x, y
+
+def collate_list(it, batch_size): # collect list
+    "collate list into list"
+    while True:
+        list_x = []
+        list_y = []
+        while len(list_x) < batch_size:
+            try:
+                x, y = next(it)
+                list_x.append(x)
+                list_y.append(y)
+            except StopIteration:
+                break
+        if len(list_x) == 0:
+            return
+        yield list_x, list_y
+        
+def collate_tensor(it, batch_size): # collect tensor
     import torch
     while True:
         list_x = []
@@ -89,7 +201,7 @@ def collate_fn(it, batch_size):
             except StopIteration:
                 break
         if len(list_x) == 0:
-            raise StopIteration
+            return
         yield torch.stack(list_x, dim=0), torch.stack(list_y, dim=0)
 
 def data_for_exp(
@@ -100,13 +212,24 @@ def data_for_exp(
         context_length: int = 72,
         window_split_ratio: float = 0.75, 
         random_state: int = 42
-    ):
+        ):
+        # load the YAML file
+        with open("dataset/data_loader_config.yaml", "r") as file:
+            config_all = yaml.safe_load(file)
+
         # raise NotImplementedError("window_split_ratio -> int")
-        loader = dp.LoadDataset(
+        if country == 'uk':
+            loader = dp.LoadUKDataset(
                 resolution=resolution,
                 country=country,
-                split_ratio=1
+                split_ratio=config_all['global_split_ratio']
             )
+        else:
+            loader = dp.LoadDataset(
+                    resolution=resolution,
+                    country=country,
+                    split_ratio=config_all['global_split_ratio']
+                )
 
         reso_country = [
             ('60m', 'nl'),
@@ -118,188 +241,44 @@ def data_for_exp(
         ]
         
         # check if resolution, country is in reso_country
-        for reso, cnt in reso_country:
-            if reso == resolution and cnt == country:
-                found = True
-                break
-
-        if not found:
+        if (resolution, country) not in reso_country:
             raise ValueError("Resolution or country not found in reso_country")
-        # write case for each tuple in reso_country
+        try:
+            config = config_all[f'{country}_{resolution}']
+        except KeyError:
+            raise ValueError("Invalid country or resolution")
         
-        if resolution == '60m' and country == 'nl':
-            if data_type == 'ind':
-                houses = 30
-                print("Loading individual data")
-                df_train, _ = loader.load_dataset_ind()
-                pair_it = PairIterable(
-                    df_train,
-                    prediction_length=prediction_length,
-                    context_length=context_length,
-                    total_pairs=30*60,
-                    random_state=random_state
-                )   
-            if data_type == 'agg':
-                print("Loading aggregated data")
-                df_train, _ = loader.load_dataset_agg(
-                    num_agg = 3,
-                    num_houses = 22,
-                    random_state = random_state
-                )
-                print("Making pairs")
-                pair_it = PairIterable(
-                    df_train,
-                    prediction_length=prediction_length,
-                    context_length=context_length,
-                    total_pairs=22*60,
-                    random_state=random_state
-                )
-        elif resolution == '60m' and country == 'ge':
-            if data_type == 'ind':
-                houses = 6
-                print("Loading individual data")
-                df_train, _ = loader.load_dataset_ind()
-                print("Making pairs")
-                pair_it = PairIterable(
-                    df_train,
-                    prediction_length=prediction_length,
-                    context_length=context_length,
-                    total_pairs=6*70,
-                    random_state=random_state
-                )
-            if data_type == 'agg':
-                print("Loading aggregated data")
-                df_train, _ = loader.load_dataset_agg(
-                    num_agg = 1,
-                    num_houses = 6,
-                    random_state = random_state
-                )
-                print("Making pairs")
-                pair_it = PairIterable(
-                    df_train,
-                    prediction_length=prediction_length,
-                    context_length=context_length,
-                    total_pairs=6*60,
-                    random_state=random_state
-                )  
-        elif resolution == '30m' and country == 'ge':
-            if data_type == 'ind':
-                houses = 6
-                print("Loading individual data")
-                df_train, _ = loader.load_dataset_ind()
-                print("Making pairs")
-                pair_it = PairIterable(
-                    df_train,
-                    prediction_length=prediction_length,
-                    context_length=context_length,
-                    total_pairs=6*70,
-                    random_state=random_state
-                )
-                # print(f'Loaded {houses} houses data, each with 70 pairs, each pair \
-                    # has input length of {prediction_length*2*3} and \
-                        # output length of {prediction_length*2}')
-            if data_type == 'agg':
-                print("Loading aggregated data")
-                df_train, _ = loader.load_dataset_agg(
-                    num_agg = 1,
-                    num_houses = 6,
-                    random_state = random_state
-                )
-                print("Making pairs")
-                pair_it = PairIterable(
-                    df_train,
-                    prediction_length=prediction_length,
-                    context_length=context_length,
-                    total_pairs=6*70,
-                    random_state=random_state
-                )  
-        elif resolution == '15m' and country == 'ge':
-            if data_type == 'ind':
-                houses = 6
-                print("Loading individual data")
-                df_train, _ = loader.load_dataset_ind()
-                print("Making pairs")
-                pair_it = PairIterable(
-                    df_train,
-                    prediction_length=prediction_length,
-                    context_length=context_length,
-                    total_pairs=6*40,
-                    random_state=random_state
-                )
+        if data_type == 'ind':
+            print("Loading individual data")
+            df_train, df_test = loader.load_dataset_ind()
+            print("Making pairs")
+            _PairIter = PairIterable if country != 'uk' else LazyPairIterable
+            pair_it = _PairIter(
+                df_test,
+                prediction_length=prediction_length,
+                context_length=context_length,
+                total_pairs=config['total_pairs_ind'],
+                random_state=random_state
+            )
+        elif data_type == 'agg':
+            print("Loading aggregated data")
+            df_train, df_test = loader.load_dataset_agg(
+                num_agg = config['num_agg'],
+                num_houses = config['num_houses_agg'],
+                random_state = random_state
+            )
             
-            if data_type == 'agg':
-                print("Loading aggregated data")
-                df_train, _ = loader.load_dataset_agg(
-                    num_agg = 1,
-                    num_houses = 6,
-                    random_state = random_state
-                )
-                print("Making pairs")
-                pair_it = PairIterable(
-                    df_train,
-                    prediction_length=prediction_length,
-                    context_length=context_length,
-                    total_pairs=6*40,
-                    random_state=random_state
-                )
-        elif resolution == '30m' and country == 'uk':
-            if data_type == 'ind':
-                houses = 30
-                print("Loading individual data")
-                df_train, _ = loader.load_dataset_ind()
-                print("Making pairs")
-                pair_it = PairIterable(
-                    df_train,
-                    prediction_length=prediction_length,
-                    context_length=context_length,
-                    total_pairs=30*60,
-                    random_state=random_state
-                )
-            if data_type == 'agg':
-                print("Loading aggregated data")
-                df_train, _ = loader.load_dataset_agg(
-                    num_agg = 5,
-                    num_houses = 100,
-                    random_state = random_state
-                )
-                print("Making pairs")
-                pair_it = PairIterable(
-                    df_train,
-                    prediction_length=prediction_length,
-                    context_length=context_length,
-                    total_pairs=5*60,
-                    random_state=random_state
-                )
-        elif resolution == '60m' and country == 'uk':
-            if data_type == 'ind':
-                houses = 30
-                print("Loading individual data")
-                df_train, _ = loader.load_dataset_ind()
-                print("Making pairs")
-                pair_it = PairIterable(
-                    df_train,
-                    prediction_length=prediction_length,
-                    context_length=context_length,
-                    total_pairs=30*60,
-                    random_state=random_state
-                )            
-            if data_type == 'agg':
-                print("Loading aggregated data")
-                df_train, _ = loader.load_dataset_agg(
-                    num_agg = 5,
-                    num_houses = 60,
-                    random_state = random_state
-                )
-                print("Making pairs")
-                pair_it = PairIterable(
-                    df_train,
-                    prediction_length=prediction_length,
-                    context_length=context_length,
-                    total_pairs=5*60,
-                    random_state=random_state
-                )
+            print("Making pairs")
+            _PairIter = PairIterable if country != 'uk' else LazyPairIterable
+            pair_it =  _PairIter (
+                df_test,
+                prediction_length=prediction_length,
+                context_length=context_length,
+                total_pairs=config['total_pairs_agg'],
+                random_state=random_state
+            )
         else:
-            raise ValueError("Invalid resolution or country")
+            raise ValueError("Invalid data type (ind, agg)")
 
         return pair_it
 

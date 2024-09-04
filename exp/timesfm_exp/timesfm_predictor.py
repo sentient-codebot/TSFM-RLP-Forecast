@@ -59,8 +59,15 @@ if __name__ == "__main__":
     
     # -------- Experiment Configuration --------
     exp_id = cf.generate_time_id()
+    print(f"----------------- Experiment ID: {exp_id} -----------------")
     
     for reso, country in reso_country:
+        if reso == '60m':
+            num_steps_day = 24
+        elif reso == '30m':
+            num_steps_day = 48
+        elif reso == '15m':
+            num_steps_day = 96
         for _type in ['ind', 'agg']:
             print('--------------------------------------------------')
             print(f"reso: {reso}, country: {country}, type: {_type}")
@@ -70,16 +77,20 @@ if __name__ == "__main__":
                 resolution = reso,
                 country = country,
                 data_type = _type,
-                window_split_ratio = 0.75, # TODO 有点混乱
+                context_length=num_steps_day*3,
+                prediction_length=num_steps_day,
             )
             # pair_iterable.total_pairs = 10 # NOTE only for debug
-            pair_it = dl.array_to_list(iter(pair_iterable))
-            if reso == '60m':
-                pred_length = 24
-            elif reso == '30m':
-                pred_length = 48
-            elif reso == '15m':
-                pred_length = 96
+            batch_size = 128
+            pair_it = dl.collate_list(dl.array_to_list(dl.filter_nan(iter(pair_iterable))), batch_size=batch_size)
+            
+            # for x, y in pair_it:
+            #     print(f'{len(x), len(x[0])}')
+            #     print(f'{len(y), len(y[0])}')
+            #     break
+                
+            # continue
+            
             # ----------------- Experiment Configuration -----------------
             data_config = cf.DataConfig(
                 country=country,
@@ -95,24 +106,28 @@ if __name__ == "__main__":
             
             model = get_timesfm_predictor(
                 context_length=96,
-                prediction_length=pred_length,
+                prediction_length=num_steps_day,
             )
             
             _input = []
             _target = []
-            for x, y in tqdm(pair_it, total=len(pair_iterable)):
-                _input.append(pad_sequence(x, 72))
-                _target.append(y)
-            _target = np.stack(_target)
-            forecast, _ = model.forecast(
-                inputs=_input,
-                freq=[0]*len(_input),
-            )
-            # type(forecast): np.ndarray
-            print(forecast.shape)
+            forecast = None
+            for x, y in tqdm(pair_it, total=len(pair_iterable)//batch_size):
+                _input += x
+                _target += y
+                y_pred, _ = model.forecast(
+                    inputs=x,
+                    freq=[0]*len(x),
+                )
+                if forecast is None:
+                    forecast = y_pred
+                else:
+                    forecast = np.concatenate([forecast, y], axis=0)
             
-            _mae = evm.mae(forecast, _target)
-            _rmse = evm.rmse(forecast, _target)
+            target = np.array(_target)
+            
+            _mae = evm.mae(forecast, target)
+            _rmse = evm.rmse(forecast, target)
             _q_10 = -1.0
             _q_50 = -1.0
             _q_90 = -1.0

@@ -1,7 +1,11 @@
-from typing import Union
+from typing import Union, Dict
+import yaml
+import itertools
+
 import pandas as pd
 import dask.dataframe as dd
 import numpy as np
+from tqdm import tqdm
 
 class LoadDataset:
     """
@@ -62,6 +66,19 @@ class LoadDataset:
         test_data = data[~data['id'].isin(id_list)]
   
         return train_data, test_data
+    
+    def get_row_group_ids(self) -> Dict:
+        path_file = self._path()
+        data_dd = dd.read_parquet(path_file, split_row_groups=True)
+        num_divisions = data_dd.npartitions
+        
+        dict_row_group_ids = {}
+        for idx_division in tqdm(range(num_divisions)):
+            rgroup = data_dd.get_partition(idx_division)
+            id_list = rgroup['id'].unique().compute()
+            dict_row_group_ids[idx_division] = list(id_list)
+            
+        return dict_row_group_ids
     
     def load_dataset_agg(self, 
                          num_agg: int = 2,
@@ -136,7 +153,108 @@ class LoadDataset:
         print("Number of unique ids: ", len(id_list))
         print("Number of data points: ", data.shape[0])
     
+class LoadUKDataset(LoadDataset):
+    def __init__(self, *args, **kwargs):
+        super(LoadUKDataset, self).__init__(*args, **kwargs)
+        
+    def _split_ids(self):
+        with open(f'dataset/{self.resolution}_{self.country}_row_group_ids.yaml', 'r') as f:
+            dict_row_group_ids = yaml.safe_load(f)
+        self.dict_row_group_ids = dict_row_group_ids
+        
+        list_len_row_group = [len(_row_group_ids)-1 for _row_group_ids in dict_row_group_ids.values()]
+            # -1 to exclude the last id in the row group because it's also in the next.
+        list_len_row_group[-1] += 1 # add the last id in the last row group
+        accum_len_row_group = list(itertools.accumulate(list_len_row_group))
+        print('total number of ids:', accum_len_row_group[-1])
+        print('total number of row groups:', len(dict_row_group_ids))
+        assert self.split_ratio <= 1
+        for idx, accum_len in enumerate(accum_len_row_group):
+            if self.split_ratio == 0:
+                _last_train_group = -1
+                break
+            if accum_len > self.split_ratio * accum_len_row_group[-1]:
+                if idx == 0:
+                    _last_train_group = 0
+                else:
+                    _last_train_group = idx - 1
+                break
+            elif idx == len(accum_len_row_group) - 1:
+                _last_train_group = idx
+        print('last train group:', _last_train_group)
+        
+        self.train_row_groups = list(range(0, _last_train_group+1))
+        self.test_row_groups = list(range(_last_train_group+1, len(dict_row_group_ids)))
+        print('total number of train ids:', 
+              sum(list_len_row_group[_idx_group] for _idx_group in self.train_row_groups))
+        print('total number of test ids:', 
+              sum(list_len_row_group[_idx_group] for _idx_group in self.test_row_groups))
+        
+    def _ckeck_train_test_split(self):
+        if self.train_row_groups:
+            df_train = self.data_dd.partitions[self.train_row_groups]
+        else:
+            # create an empty Dask DataFrame with the same columns as self.data_dd
+            df_train = dd.from_pandas(pd.DataFrame(columns=self.data_dd.columns), npartitions=1)
+        
+        if self.test_row_groups:
+            df_test = self.data_dd.partitions[self.test_row_groups]
+        else:
+            # create an empty Dask DataFrame with the same columns as self.data_dd
+            df_test = dd.from_pandas(pd.DataFrame(columns=self.data_dd.columns), npartitions=1)
+        return df_train, df_test
+  
 
+    def load_dataset_ind(self):
+        """
+        Load dataset from the path, the dataset is of individual level.
+        """
+        self._input_check()
+        
+        # example : "hf://datasets/Weijie1996/load_timeseries/30m_resolution_ge/ge_30m.parquet"
+        path_file = self._path()
+        self.data_dd = dd.read_parquet(path_file, split_row_groups=True)
+        
+        # split ids into train and test
+        self._split_ids()
+        df_train, df_test = self._ckeck_train_test_split()
+
+        return df_train, df_test
+    
+    def aggreagte_by_id(self, df, num_houses: int =3):
+        "num_houses: int, the number of houses (ids) to aggregate."
+        # Step 1: Create a group key by using a counter that increments every N rows
+        def create_group_key(partition):
+            partition['group_key'] = (partition.groupby('datetime').cumcount() // num_houses)
+            return partition
+
+        # Define the meta to include the 'group_key' column
+        meta = df._meta.assign(group_key=0)
+        
+        df = df.map_partitions(create_group_key, meta=meta)
+        
+        # Step 2: Group by 'datetime' and 'group_key', then sum the 'target' values
+        # NOTE: LIMITATION: restrict to within-partition groupby, efficient but not "true and precise".
+        def group_and_sum(partition):
+            partition.groupby(['datetime', 'group_key'])['target'].sum().reset_index()
+            # algin the column of meta
+            partition['category'] = self.resolution
+            partition['id'] = partition['group_key'].astype('str')
+            partition = partition.drop(columns='group_key')
+            return partition
+        
+        result = df.map_partitions(group_and_sum, meta=meta.drop(columns='group_key'))
+        return result
+    
+    def load_dataset_agg(self, num_houses: int = 3, **kwargs):
+        "num_houses: int, the number of houses (ids) to aggregate."
+        df_train, df_test = self.load_dataset_ind()
+        
+        df_agg_train = self.aggreagte_by_id(df_train, num_houses)
+        df_agg_test = self.aggreagte_by_id(df_test, num_houses)
+        
+        return df_agg_train, df_agg_test
+           
 class PairMaker:
     """
     Given a time series dataset, this class generates pairs of time series data for prediction
@@ -167,7 +285,7 @@ class PairMaker:
         
         # check the input
         self._check_input()
-
+        # print(data)
         # check the type of split
         if type_of_split not in ['noverlap', 'overlap']:
             raise ValueError("Type of split should be 'noverlap' or 'overlap'")
@@ -204,16 +322,6 @@ class PairMaker:
                 except IndexError:
                     break
         
-        # change the pairs to two np.array X and y
-        # X = []
-        # y = []
-        # for pair in pairs:
-        #     X.append(pair[0].values)
-        #     y.append(pair[1].values)
-        
-        # X = np.array(X)
-        # y = np.array(y)
-        
         return pairs
 
 if __name__ == "__main__":
@@ -235,14 +343,14 @@ if __name__ == "__main__":
         random_state=42
     )
     
-    # Select one group of data
-    train = train[train['id'] == train['id'].unique()[0]]
-    X, Y = pair_maker.make_pairs(train, type_of_split='overlap')
-    print(X.shape, Y.shape) 
+    # # Select one group of data
+    # train = train[train['id'] == train['id'].unique()[0]]
+    # X, Y = pair_maker.make_pairs(train, type_of_split='overlap')
+    # print(X.shape, Y.shape) 
     
-    import matplotlib.pyplot as plt
-    _num = 20
-    combined = np.concatenate((X[_num], Y[_num]))
-    plt.plot(combined)
-    plt.plot(X[_num])
-    plt.show()
+    # import matplotlib.pyplot as plt
+    # _num = 20
+    # combined = np.concatenate((X[_num], Y[_num]))
+    # plt.plot(combined)
+    # plt.plot(X[_num])
+    # plt.show()

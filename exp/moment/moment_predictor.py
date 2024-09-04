@@ -9,12 +9,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from tqdm import tqdm
+from pprint import pprint
 
 import dataset.data_loader as dl
 import exp.eva_metrics as evm
 import utility.configuration as cf
 
-from moment_fm import MOMENTPipeline
+from momentfm import MOMENTPipeline
 
 if __name__ == "__main__":
     reso_country = [
@@ -30,7 +31,14 @@ if __name__ == "__main__":
     exp_id = cf.generate_time_id()
     
     for reso, country in reso_country:
-        for _type in ['ind', 'agg']:
+        if reso == '60m':
+            num_steps_day = 24
+        elif reso == '30m':
+            num_steps_day = 48
+        elif reso == '15m':
+            num_steps_day = 96
+        
+        for _type in ['ind','agg']:  # 'agg', , 'ind'
             print('--------------------------------------------------')
             print(f"reso: {reso}, country: {country}, type: {_type}")
             print('--------------------------------------------------')
@@ -39,16 +47,13 @@ if __name__ == "__main__":
                 resolution = reso,
                 country = country,
                 data_type = _type,
-                window_split_ratio = 0.75, # TODO 有点混乱
+                context_length=num_steps_day*3,
+                prediction_length=num_steps_day,
             )
             # pair_iterable.total_pairs = 10 # NOTE only for debug
-            pair_it = dl.array_to_tensor(iter(pair_iterable))
-            if reso == '60m':
-                pred_length = 24
-            elif reso == '30m':
-                pred_length = 48
-            elif reso == '15m':
-                pred_length = 96
+            batch_size = 128
+            pair_it = dl.collate_numpy(pair_iterable, batch_size)
+            
                 
             # ----------------- Experiment Configuration -----------------
             data_config = cf.DataConfig(
@@ -57,19 +62,20 @@ if __name__ == "__main__":
                 aggregation_type=_type,
             )
             foo = next(iter(pair_iterable))
-           
-            # Define the pipeline
             model_config = cf.ModelConfig(
-                model_name="MOMENT-1-large",
+                model_name="AutonLab/MOMENT-1-large",
                 lookback_window=foo[0].shape[-1],
                 prediction_length=foo[1].shape[-1],
             )
+            # ----------------- Experiment Configuration -----------------
             
+        
+            # ----------------- Experiment -----------------
             model = MOMENTPipeline.from_pretrained(
                 "AutonLab/MOMENT-1-large", 
                 model_kwargs={
                     'task_name': 'forecasting',
-                    'forecast_horizon': pred_length,
+                    'forecast_horizon': num_steps_day,
                     'head_dropout': 0.1,
                     'weight_decay': 0,
                     'freeze_encoder': True, # Freeze the patch embedding layer
@@ -79,42 +85,27 @@ if __name__ == "__main__":
             )
             model.init()
             
-            # Make prediction
-            _input = []
-            _output = []
-            for x, y in tqdm(pair_it, total=len(pair_iterable)):
-                _input.append(x)
-                _output.append(y.numpy())
-            _input = torch.stack(_input)[:100,:]
+            # Make predictionpi
+            _mae, _rmse  = [], []
             
-            # Repeat the last dimension to 512
-            _input = _input.repeat(1, 512//_input.shape[-1]+1)[:,-512:]
-            _input = _input + torch.randn_like(_input)*1e-5
-            _output = np.stack(_output)[:100,:] 
-            
-            # Input is float32              
-            _input = _input.float()
-            out = model(_input.unsqueeze(0))
-            median = out.forecast.squeeze(0)
-            
-            # Calculate the evaluation metrics
-            _mae = evm.mae(median.detach().numpy() , _output)
-            _rmse = evm.rmse(median.detach().numpy(), _output)
+            for x , y in tqdm(pair_it, total = len(pair_iterable)//batch_size):
+                _input = torch.tensor(x).float()
+                _input = _input.repeat(1, 512//x.shape[2]+1, 1).reshape(x.shape[0], 1, -1)
+                _input = _input[:,:,-512:]
+                _target = y.squeeze(1)
+                out = model(_input).forecast.squeeze(0)
+                
+                print(out.shape, num_steps_day, _target.shape)
+                _mae.append(evm.mae(out.detach().numpy(), _target))
+                _rmse.append(evm.rmse(out.detach().numpy() , _target))
 
-            # Print the evaluation metrics
-            print(f"reso: {reso}, country: {country}, type: {_type}")
-            print(f"q_10_loss: {np.nan}")
-            print(f"q_50_loss: {np.nan,}")
-            print(f"q_90_loss: {np.nan,}")
-            print(f"mae_loss: {_mae}")
-            print(f"rmse_loss: {_rmse}")
-            
+            _mae, _rmse = np.mean(_mae), np.mean(_rmse)
             # Output the experiment result
             eval_metrics = evm.EvaluationMetrics(
                 quantile_loss={
-                    '0.1': np.nan,
-                    '0.5': np.nan,
-                    '0.9': np.nan,
+                    '0.1': -1,
+                    '0.5': -1,
+                    '0.9': -1,
                 },
                 mae=_mae,
                 rmse=_rmse,
@@ -126,11 +117,19 @@ if __name__ == "__main__":
                 model=model_config,
                 result=eval_metrics,
             )
-            exp_config.append_csv(f'result/{exp_id}.csv')
+            exp_config.append_csv(f'exp/moment/result/{exp_id}.csv')
             
-            # Plot the prediction
-            plt.plot(median[0].detach().numpy().flatten(), label='prediction')
-            plt.plot(_output[0].flatten(), label='ground truth')
-            plt.legend()
-            plt.show()
-        
+            # ----------------- Plot the Results-----------
+            print(x.shape, _target[0, :].shape, out[0, 0, :].detach().numpy().shape)
+            plt.plot(range(x.shape[2]), x[0, 0, :], label='Input', color='b')
+            target_range = range(x.shape[2], x.shape[2] + len(_target[0, :]))
+            plt.plot(target_range, _target[0, :], c='r', label='Target')
+            plt.plot(target_range, out[0, 0, :].detach().numpy(), c='g', label='Median')
+            plt.xlabel('Time')
+            plt.ylabel('Value')
+            plt.title(f'Chronos Predictions for {country.capitalize()} ({_type.capitalize()})')
+            _path = 'exp/moment/result/'
+            plt.savefig(_path + f'moment_{country}_{reso}_{_type}.png')
+            plt.close()
+                    
+            
