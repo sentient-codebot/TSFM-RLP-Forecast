@@ -114,8 +114,8 @@ class LazyPairIterable:
                 
     def __next__(self):
         return next(self.__gen)
-
-def collate_np(pair_iterable, batch_size=120): # collect numpy
+    
+def collate_pandas(pair_iterable, batch_size=120):
     X_batch = []
     y_batch = []
     
@@ -123,11 +123,28 @@ def collate_np(pair_iterable, batch_size=120): # collect numpy
     
     for x, y in iterator:
         df = pd.DataFrame(np.hstack([x.reshape(1, -1), y.reshape(1, -1)]))
-        
+        x_l = x.reshape(1, -1).shape[1]
         df.dropna(inplace=True)
         
         if not df.empty:
-            x_clean, y_clean = df.iloc[:, 0].values, df.iloc[:, 1].values
+            x_clean, y_clean = df.iloc[:, :x_l].values, df.iloc[:, x_l:].values
+            X_batch.append(x_clean)
+            y_batch.append(y_clean)
+
+
+def collate_numpy(pair_iterable, batch_size=120): # collect numpy
+    X_batch = []
+    y_batch = []
+    
+    iterator = iter(pair_iterable)
+    
+    for x, y in iterator:
+        df = pd.DataFrame(np.hstack([x.reshape(1, -1), y.reshape(1, -1)]))
+        x_l = x.reshape(1, -1).shape[1]
+        df.dropna(inplace=True)
+        
+        if not df.empty:
+            x_clean, y_clean = df.iloc[:, :x_l].values, df.iloc[:, x_l:].values
             X_batch.append(x_clean)
             y_batch.append(y_clean)
         
@@ -250,8 +267,10 @@ def data_for_exp(
                 num_houses = config['num_houses_agg'],
                 random_state = random_state
             )
+            
             print("Making pairs")
-            pair_it = PairIterable(
+            _PairIter = PairIterable if country != 'uk' else LazyPairIterable
+            pair_it =  _PairIter (
                 df_test,
                 prediction_length=prediction_length,
                 context_length=context_length,
