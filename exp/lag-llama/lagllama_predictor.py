@@ -130,11 +130,11 @@ def generate_dataset(x, y, freq):
 if __name__ == "__main__":
     reso_country = [
             ('60m', 'nl'),
-            # ('60m', 'ge'),
-            # ('30m', 'ge'),
-            # ('15m', 'ge'),
-            # ('30m', 'uk'),
-            # ('60m', 'uk'),
+            ('60m', 'ge'),
+            ('30m', 'ge'),
+            ('15m', 'ge'),
+            ('30m', 'uk'),
+            ('60m', 'uk'),
         ]
 
     # -------- Experiment Configuration --------

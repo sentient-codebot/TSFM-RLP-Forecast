@@ -8,8 +8,15 @@ git clone https://github.com/time-series-foundation-models/lag-llama.git $curren
 # cd
 # install the requirements for lag-llama
 pip install -r $current_dir/lag-llama/requirements.txt
-# download pretrained model weights
-huggingface-cli download time-series-foundation-models/Lag-Llama lag-llama.ckpt --local-dir $current_dir/lag-llama
-# install the lag-llama package
-pip install -e $current_dir/lag-llama
+
+# # install the lag-llama package
+cd $current_dir/lag-llama
+pip install .
+
 # pip list | grep lag-llama
+# wget https://huggingface.co/time-series-foundation-models/Lag-Llama/resolve/main/lag-llama.ckpt
+wget https://huggingface.co/time-series-foundation-models/Lag-Llama/resolve/main/lag-llama.ckpt
+# mv $current_dir/lag-llama.ckpt $current_dir/lag-llama
+
+pip install "dask[dataframe]"
+pip install pandas
