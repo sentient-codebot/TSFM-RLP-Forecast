@@ -16,6 +16,7 @@ from tqdm import tqdm
 import dataset.data_loader as dl
 import exp.eva_metrics as evm
 import utility.configuration as cf
+import exp.plot_tool as pt
 
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -65,7 +66,7 @@ if __name__ == "__main__":
     
     
     exp_id = cf.generate_time_id()
-    split_ratio = 0.3
+    split_ratio = 0.6
     
     for reso, country in reso_country:
         if reso == '60m':
@@ -163,32 +164,5 @@ if __name__ == "__main__":
             exp_config.append_csv(f'exp/gp/result/{exp_id}.csv')
             # ----------------- Experiment -----------------
             
-             # ----------------- Plot the Results-----------
-            plt.plot(x[0, :], label='Input', color='b')
-            
-            # Create the range for the target and predicted values
-            target_range = range(len(x[0, :]), len(x[0, :]) + len(y[0, :]))
-            
-            # Plot the target sequence
-            plt.plot(target_range, y[0, :], c='r', label='Target')
-            
-            # Plot the median prediction
-            plt.plot(target_range, mean[0, :], c='g', label='Median')
-            
-            # Fill the area between low and high predictions
-            plt.fill_between(target_range, low[0, :], high[0, :], color='gray', alpha=0.3, label='Uncertainty')
-            
-            # Set plot labels and title
-            plt.xlabel('Time')
-            plt.ylabel('Value')
-            plt.title(f'GP Predictions for {country.capitalize()} ({_type.capitalize()})')
-            
-            # Add a legend
-            # plt.legend()
-
-            # Save the plot
-            _path = 'exp/gp/result/'
-            plt.savefig(_path + f'gp_{country}_{reso}_{_type}.png')
-            plt.close()
-                    
-            
+            # ----------------- Plot the Results-----------
+            pt.plot_gp_predictions(x, y, mean, low, high, country, reso, _type,  _path = 'exp/gp/result/')

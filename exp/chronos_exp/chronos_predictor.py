@@ -16,6 +16,7 @@ from chronos import ChronosPipeline
 import dataset.data_loader as dl
 import exp.eva_metrics as evm
 import utility.configuration as cf
+import exp.plot_tool as pt
 
 def chronos_prediction(
     device_map: Union[str, torch.device] = "cpu",
@@ -78,7 +79,7 @@ if __name__ == "__main__":
             )
             foo = next(iter(pair_iterable))
             model_config = cf.ModelConfig(
-                model_name="chronos-t5-large",
+                model_name="chronos-t5-small",
                 lookback_window=foo[0].shape[-1],
                 prediction_length=foo[1].shape[-1],
             )
@@ -115,61 +116,65 @@ if __name__ == "__main__":
             print('target, forecast shape', _target.shape, forecast.shape)
                     
                     
-            eval_metrics = evm.EvaluationMetrics(
-                quantile_loss={
-                    '0.1': _q_10,
-                    '0.5': _q_50,
-                    '0.9': _q_90,
-                },
-                mae=_mae,
-                rmse=_rmse,
-            )
+            # eval_metrics = evm.EvaluationMetrics(
+            #     quantile_loss={
+            #         '0.1': _q_10,
+            #         '0.5': _q_50,
+            #         '0.9': _q_90,
+            #     },
+            #     mae=_mae,
+            #     rmse=_rmse,
+            # )
             
-            print(f"reso: {reso}, country: {country}, type: {_type}")
-            print(f"q_10_loss: {_q_10}")
-            print(f"q_50_loss: {_q_50}")
-            print(f"q_90_loss: {_q_90}")
-            print(f"mae_loss: {_mae}")
-            print(f"rmse_loss: {_rmse}")
+            # print(f"reso: {reso}, country: {country}, type: {_type}")
+            # print(f"q_10_loss: {_q_10}")
+            # print(f"q_50_loss: {_q_50}")
+            # print(f"q_90_loss: {_q_90}")
+            # print(f"mae_loss: {_mae}")
+            # print(f"rmse_loss: {_rmse}")
             
-            exp_config = cf.ExperimentConfig(
-                exp_id=exp_id,
-                data=data_config,
-                model=model_config,
-                result=eval_metrics,
-            )
-            exp_config.append_csv(f'/home/wxia/tsfm/TSFM-RLP-Forecast/exp/chronos_exp/result/{exp_id}.csv')
+            # exp_config = cf.ExperimentConfig(
+            #     exp_id=exp_id,
+            #     data=data_config,
+            #     model=model_config,
+            #     result=eval_metrics,
+            # )
+            # exp_config.append_csv(f'/home/wxia/tsfm/TSFM-RLP-Forecast/exp/chronos_exp/result/{exp_id}.csv')
             # ----------------- Experiment-----------------
             
             
-            # ----------------- Plot the Results-----------
-            plt.plot(_input[0, :], label='Input', color='b')
+            # # ----------------- Plot the Results-----------
+            # plt.plot(_input[0, :], label='Input', color='b')
             
-            # Create the range for the target and predicted values
-            target_range = range(len(_input[0, :]), len(_input[0, :]) + len(_target[0, :]))
+            # # Create the range for the target and predicted values
+            # target_range = range(len(_input[0, :]), len(_input[0, :]) + len(_target[0, :]))
             
-            # Plot the target sequence
-            plt.plot(target_range, _target[0, :], c='r', label='Target')
+            # # Plot the target sequence
+            # plt.plot(target_range, _target[0, :], c='r', label='Target')
             
-            # Plot the median prediction
-            plt.plot(target_range, median[0, :], c='g', label='Median')
+            # # Plot the median prediction
+            # plt.plot(target_range, median[0, :], c='g', label='Median')
             
-            # Fill the area between low and high predictions
-            plt.fill_between(target_range, low[0, :], high[0, :], color='gray', alpha=0.3, label='Uncertainty')
+            # # Fill the area between low and high predictions
+            # plt.fill_between(target_range, low[0, :], high[0, :], color='gray', alpha=0.3, label='Uncertainty')
             
-            # Set plot labels and title
-            plt.xlabel('Time')
-            plt.ylabel('Value')
-            plt.title(f'Chronos Predictions for {country.capitalize()} ({_type.capitalize()})')
+            # # Set plot labels and title
+            # plt.xlabel('Time')
+            # plt.ylabel('Value')
+            # plt.title(f'Chronos Predictions for {country.capitalize()} ({_type.capitalize()})')
             
-            # Add a legend
-            # plt.legend()
+            # # Add a legend
+            # # plt.legend()
 
-            # Save the plot
+            # # Save the plot
+            
+            # plt.savefig(_path + f'chronos_{country}_{reso}_{_type}.png')
+            # plt.close()
+        
+            # ----------------- Plot the Results-----------
             _path = 'exp/chronos_exp/result/'
-            plt.savefig(_path + f'chronos_{country}_{reso}_{_type}.png')
-            plt.close()
-                    
+            pt.plot_gp_predictions(x, y, median, low, high, country, reso, _type,  _path)
+
             
             
             

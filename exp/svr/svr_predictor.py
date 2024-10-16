@@ -4,7 +4,7 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')
 # dataset_path = os.path.join(parent_dir, 'dataset')
 sys.path.append(parent_dir)
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.svm import SVR
 from sklearn.pipeline import make_pipeline
@@ -15,6 +15,7 @@ from tqdm import tqdm
 import dataset.data_loader as dl
 import exp.eva_metrics as evm
 import utility.configuration as cf
+import exp.plot_tool as pt
 
 def svr_fit(input, target):
     regrs = []
@@ -129,17 +130,6 @@ if __name__ == "__main__":
             # ----------------- Experiment -----------------
             
             # ----------------- Plot the Results-----------
-            x = x.reshape(-1, num_steps_day*3)
-            plt.plot(range(num_steps_day*3), x[0, :], label='Input', color='b')
-            target_range = range(num_steps_day*3, num_steps_day*4)
-            plt.plot(target_range, y[0, :], c='r', label='Target')
-            plt.plot(target_range, y_hat[0, :], c='g', label='Median')
-            plt.xlabel('Time')
-            plt.ylabel('Value')
-            plt.title(f'SVR Predictions for {country.capitalize()} ({_type.capitalize()})')
             _path = 'exp/svr/result'
-            plt.legend()
-            plt.savefig(_path + f'/svr_{country}_{reso}_{_type}.png')
-            plt.close()
-                
+            pt.plot_predictions_point(x, y, y_hat, country, reso, _type, 'SVR', num_steps_day, _path)
                 
