@@ -20,7 +20,7 @@ import exp.plot_tool as pt
 
 def chronos_prediction(
     device_map: Union[str, torch.device] = "cpu",
-    model_type: str = "amazon/chronos-t5-large",
+    model_type: str = "amazon/chronos-t5-small",
     torch_dtype: torch.dtype = torch.float32):
   
     # Define the pipeline
@@ -69,7 +69,7 @@ if __name__ == "__main__":
                 prediction_length=num_steps_day,
             )
             # pair_iterable.total_pairs = 10 # NOTE only for debug
-            batch_size = 128
+            batch_size = 48
             pair_it = dl.collate_numpy(pair_iterable, batch_size)
             
             data_config = cf.DataConfig(
@@ -143,7 +143,7 @@ if __name__ == "__main__":
             # ----------------- Experiment-----------------
             
             
-            # # ----------------- Plot the Results-----------
+            # # # ----------------- Plot the Results-----------
             # plt.plot(_input[0, :], label='Input', color='b')
             
             # # Create the range for the target and predicted values
@@ -167,13 +167,13 @@ if __name__ == "__main__":
             # # plt.legend()
 
             # # Save the plot
-            
+            # _path = 'exp/chronos_exp/result/'
             # plt.savefig(_path + f'chronos_{country}_{reso}_{_type}.png')
             # plt.close()
         
             # ----------------- Plot the Results-----------
-            _path = 'exp/chronos_exp/result/'
-            pt.plot_gp_predictions(x, y, median, low, high, country, reso, _type,  _path)
+            # _path = 'exp/chronos_exp/result/'
+            pt.plot_chronos_predictions(_input, _target, median, low, high, country, reso, _type, _path = 'exp/chronos_exp/result/')
 
             
             
