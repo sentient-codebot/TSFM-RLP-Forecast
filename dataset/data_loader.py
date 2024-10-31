@@ -19,12 +19,8 @@ class PairIterable:
         df: pd.DataFrame,
         prediction_length: int = 24,
         context_length: int = 72,
-        # num_houses: int,
-        # num_pairs: int = 60,
         total_pairs: int = 1800,
         random_state: int = 0000,
-        # window_length: int,
-        # window_split_ratio: float,
     ):
         pair_maker = dp.PairMaker(
             window_length=prediction_length+context_length,
