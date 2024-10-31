@@ -10,8 +10,8 @@ def plot_predictions_point(x, y, y_hat, country, reso, _type, model_name, num_st
     plt.plot(target_range, y[-1, :], label='Target', color='r', linewidth=1.5)
     plt.plot(target_range, y_hat[-1, :], label='Prediction (Mean)', color='g', linewidth=1.5)
 
-    plt.xlabel('Time', fontsize=14)
-    plt.ylabel('Value', fontsize=14)
+    plt.xlabel('Time [Hour]', fontsize=14)
+    plt.ylabel('Electricity Consunption [kWh]', fontsize=14)
     plt.title(f'{model_name} predictions for {country.capitalize()}-{_type.capitalize()}-{reso}', fontsize=16)
     
     plt.xticks(fontsize=12)
@@ -21,7 +21,7 @@ def plot_predictions_point(x, y, y_hat, country, reso, _type, model_name, num_st
     plt.legend(fontsize=12, loc='upper left')
     
     # Saving the plot
-    plt.savefig(f'{_path}/svr_{country}_{reso}_{_type}.png', bbox_inches='tight')
+    plt.savefig(f'{_path}/{model_name}_{country}_{reso}_{_type}.png', bbox_inches='tight')
     plt.close()
 
 
@@ -44,8 +44,8 @@ def plot_gp_predictions(x, y, mean, low, high, country, reso, _type,  _path = 'e
     plt.fill_between(target_range, low[-1, :], high[-1, :], color='gray', alpha=0.3, label='Uncertainty')
     
     # Set plot labels and title
-    plt.xlabel('Time', fontsize=14)
-    plt.ylabel('Value', fontsize=14)
+    plt.xlabel('Time [Hour]', fontsize=14)
+    plt.ylabel('Electricity Consunption [kWh]', fontsize=14)
     plt.title(f'GP Predictions for {country.capitalize()}-{_type.capitalize()}-{reso}', fontsize=16)
     
     # Add grid and legend
@@ -78,8 +78,8 @@ def plot_chronos_predictions(_input, _target, median, low, high, country, reso, 
     plt.fill_between(target_range, low[0, :], high[0, :], color='gray', alpha=0.3, label='Uncertainty')
     
     # Set plot labels and title
-    plt.xlabel('Time', fontsize=14)
-    plt.ylabel('Value', fontsize=14)
+    plt.xlabel('Time [Hour]', fontsize=14)
+    plt.ylabel('Electricity Consunption [kWh]', fontsize=14)
     plt.title(f'Chronos Predictions for {country.capitalize()}-{_type.capitalize()}-{reso}', fontsize=16)
     
     # Add grid and legend
