@@ -16,6 +16,7 @@ import exp.eva_metrics as evm
 import utility.configuration as cf
 
 from momentfm import MOMENTPipeline
+import exp.plot_tool as pt
 
 if __name__ == "__main__":
     reso_country = [
@@ -38,7 +39,7 @@ if __name__ == "__main__":
         elif reso == '15m':
             num_steps_day = 96
         
-        for _type in ['ind','agg']:  # 'agg', , 'ind'
+        for _type in ['ind', 'agg']:  # 'agg', , 'ind'
             print('--------------------------------------------------')
             print(f"reso: {reso}, country: {country}, type: {_type}")
             print('--------------------------------------------------')
@@ -120,16 +121,26 @@ if __name__ == "__main__":
             exp_config.append_csv(f'exp/moment/result/{exp_id}.csv')
             
             # ----------------- Plot the Results-----------
-            print(x.shape, _target[0, :].shape, out[0, 0, :].detach().numpy().shape)
-            plt.plot(range(x.shape[2]), x[0, 0, :], label='Input', color='b')
-            target_range = range(x.shape[2], x.shape[2] + len(_target[0, :]))
-            plt.plot(target_range, _target[0, :], c='r', label='Target')
-            plt.plot(target_range, out[0, 0, :].detach().numpy(), c='g', label='Median')
-            plt.xlabel('Time')
-            plt.ylabel('Value')
-            plt.title(f'Chronos Predictions for {country.capitalize()} ({_type.capitalize()})')
-            _path = 'exp/moment/result/'
-            plt.savefig(_path + f'moment_{country}_{reso}_{_type}.png')
-            plt.close()
+            # print(x.shape, _target[0, :].shape, out[0, 0, :].detach().numpy().shape)
+            # plt.plot(range(x.shape[2]), x[0, 0, :], label='Input', color='b')
+            # target_range = range(x.shape[2], x.shape[2] + len(_target[0, :]))
+            # plt.plot(target_range, _target[0, :], c='r', label='Target')
+            # plt.plot(target_range, out[0, 0, :].detach().numpy(), c='g', label='Median')
+            # plt.xlabel('Time')
+            # plt.ylabel('Value')
+            # plt.title(f'Chronos Predictions for {country.capitalize()} ({_type.capitalize()})')
+            # _path = 'exp/moment/result/'
+            # plt.savefig(_path + f'moment_{country}_{reso}_{_type}.png')
+            # plt.close()
+            
+            _path = 'exp/moment/result'
+            print(x.shape, y.shape)
+            x = x[:, 0, :]
+            y = _target
+            y_hat = out[:, 0, :].detach().numpy()
+            print(x.shape, y.shape, y_hat.shape)
+            pt.plot_predictions_point(x, y, y_hat, country, reso, _type, 'moment', num_steps_day, _path)
+              
+            
                     
             

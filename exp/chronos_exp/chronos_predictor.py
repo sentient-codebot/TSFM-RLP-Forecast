@@ -6,12 +6,11 @@ sys.path.append(parent_dir)
 
 from typing import Union
 
-from chronos import ChronosPipeline
+from chronospack.src.chronos import ChronosPipeline # git clone the repo and add the path to the local repo
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from tqdm import tqdm
-from chronos import ChronosPipeline
 
 import dataset.data_loader as dl
 import exp.eva_metrics as evm
@@ -20,7 +19,7 @@ import exp.plot_tool as pt
 
 def chronos_prediction(
     device_map: Union[str, torch.device] = "cpu",
-    model_type: str = "amazon/chronos-t5-small",
+    model_type: str = "amazon/chronos-t5-tiny",
     torch_dtype: torch.dtype = torch.float32):
   
     # Define the pipeline

@@ -48,7 +48,7 @@ if __name__ == "__main__":
     
     
     exp_id = cf.generate_time_id()
-    split_ratio = 0.3
+    split_ratio = 0.6
     
     for reso, country in reso_country:
         if reso == '60m':
