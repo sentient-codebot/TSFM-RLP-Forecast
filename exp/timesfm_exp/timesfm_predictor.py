@@ -14,6 +14,7 @@ import timesfm
 import dataset.data_loader as dl
 import exp.eva_metrics as evm
 import utility.configuration as cf
+import exp.plot_tool as pt
 
 def pad_sequence(
     sequence: List,
@@ -156,5 +157,8 @@ if __name__ == "__main__":
                 result=eval_metrics,
             )
             exp_config.append_csv(f'result/{exp_id}.csv')
+            
+            _path = 'exp/timesfm_exp/result'
+            pt.plot_predictions_point(x, y, y_pred, country, reso, _type, 'TimesFM', num_steps_day, _path)
             
     print('complete.')
