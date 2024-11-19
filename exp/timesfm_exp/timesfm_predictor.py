@@ -159,6 +159,9 @@ if __name__ == "__main__":
             exp_config.append_csv(f'result/{exp_id}.csv')
             
             _path = 'exp/timesfm_exp/result'
-            pt.plot_predictions_point(x, y, y_pred, country, reso, _type, 'TimesFM', num_steps_day, _path)
+            pt.plot_predictions_point(
+                np.array(x), 
+                np.array(y), 
+                y_pred, country, reso, _type, 'TimesFM', num_steps_day, _path)
             
     print('complete.')
