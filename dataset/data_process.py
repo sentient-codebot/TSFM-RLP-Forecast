@@ -329,7 +329,7 @@ if __name__ == "__main__":
     load = LoadDataset(
         resolution='60m',
         country='nl',
-        split_ratio=0.6
+        split_ratio=0.3
     )
 
     train, test = load.load_dataset_agg(num_agg=2, num_houses=3)
@@ -343,10 +343,10 @@ if __name__ == "__main__":
         random_state=42
     )
     
-    # # Select one group of data
-    # train = train[train['id'] == train['id'].unique()[0]]
-    # X, Y = pair_maker.make_pairs(train, type_of_split='overlap')
-    # print(X.shape, Y.shape) 
+    # Select one group of data
+    train = train[train['id'] == train['id'].unique()[0]]
+    X, Y = pair_maker.make_pairs(train, type_of_split='overlap')
+    print(X.shape, Y.shape) 
     
     # import matplotlib.pyplot as plt
     # _num = 20

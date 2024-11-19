@@ -14,6 +14,7 @@ from nixtla import NixtlaClient
 import dataset.data_loader as dl
 import exp.eva_metrics as evm
 import utility.configuration as cf
+import exp.plot_tool as pt
 
 
 def numpy_to_dataframe(x, freq='15T'):
@@ -53,7 +54,7 @@ if __name__ == "__main__":
         elif reso == '15m':
             num_steps_day = 96
         
-        for _type in ['ind', 'agg']:  # 'agg', , 'ind'
+        for _type in ['ind','agg']:  # 'agg', , 'ind'
             print('--------------------------------------------------')
             print(f"reso: {reso}, country: {country}, type: {_type}")
             print('--------------------------------------------------')
@@ -135,16 +136,6 @@ if __name__ == "__main__":
             # ----------------- Experiment -----------------
             
             # ----------------- Plot the Results-----------
-            x = x.reshape(-1, num_steps_day*3)
-            plt.plot(range(num_steps_day*3), x[0, :], label='Input', color='b')
-            target_range = range(num_steps_day*3, num_steps_day*4)
-            plt.plot(target_range, y[0, :], c='r', label='Target')
-            plt.plot(target_range, y_hat[0, :], c='g', label='Median')
-            plt.xlabel('Time')
-            plt.ylabel('Value')
-            plt.title(f'Chronos Predictions for {country.capitalize()} ({_type.capitalize()})')
             _path = 'exp/timegpt/result'
-            plt.legend()
-            plt.savefig(_path + f'/timegpt_{country}_{reso}_{_type}.png')
-
-            plt.close()
+            pt.plot_predictions_point(x, y, y_hat, country, reso, _type, 'timegpt', num_steps_day, _path)
+                

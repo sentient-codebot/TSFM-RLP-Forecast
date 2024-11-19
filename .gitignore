@@ -10,3 +10,4 @@ result/
 dataset/_test.py
 .venv
 configs
+chronospack

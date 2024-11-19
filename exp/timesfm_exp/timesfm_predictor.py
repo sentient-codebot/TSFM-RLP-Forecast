@@ -14,6 +14,7 @@ import timesfm
 import dataset.data_loader as dl
 import exp.eva_metrics as evm
 import utility.configuration as cf
+import exp.plot_tool as pt
 
 def pad_sequence(
     sequence: List,
@@ -122,7 +123,7 @@ if __name__ == "__main__":
                 if forecast is None:
                     forecast = y_pred
                 else:
-                    forecast = np.concatenate([forecast, y], axis=0)
+                    forecast = np.concatenate([forecast, y_pred], axis=0)
             
             target = np.array(_target)
             
@@ -156,5 +157,11 @@ if __name__ == "__main__":
                 result=eval_metrics,
             )
             exp_config.append_csv(f'result/{exp_id}.csv')
+            
+            _path = 'exp/timesfm_exp/result'
+            pt.plot_predictions_point(
+                np.array(x), 
+                np.array(y), 
+                y_pred, country, reso, _type, 'TimesFM', num_steps_day, _path)
             
     print('complete.')
