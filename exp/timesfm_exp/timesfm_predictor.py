@@ -123,7 +123,7 @@ if __name__ == "__main__":
                 if forecast is None:
                     forecast = y_pred
                 else:
-                    forecast = np.concatenate([forecast, y], axis=0)
+                    forecast = np.concatenate([forecast, y_pred], axis=0)
             
             target = np.array(_target)
             
