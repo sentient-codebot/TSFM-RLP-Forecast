@@ -21,6 +21,7 @@ def plot_predictions_point(x, y, y_hat, country, reso, _type, model_name, num_st
     plt.legend(fontsize=12, loc='upper left')
     
     # Saving the plot
+    os.makedirs(_path, exist_ok=True)
     plt.savefig(f'{_path}/{model_name}_{country}_{reso}_{_type}.png', bbox_inches='tight')
     plt.close()
 
