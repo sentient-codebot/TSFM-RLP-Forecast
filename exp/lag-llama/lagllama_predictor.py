@@ -18,7 +18,7 @@ from gluonts.dataset.pandas import PandasDataset
 import dataset.data_loader as dl
 import exp.eva_metrics as evm
 import utility.configuration as cf
-
+import exp.plot_tool as pt
 from lag_llama.gluon.estimator import LagLlamaEstimator
 
 ckpt_path = os.path.abspath(os.path.join(parent_dir, './lag-llama', './lag-llama.ckpt'))
@@ -231,8 +231,19 @@ if __name__ == "__main__":
                 result=eval_metrics,
             )
             exp_config.append_csv(f'result/{exp_id}.csv')
+            last_input = _input[-1]
+            last_target = _target[-1]
+            last_forecast = forecasts_result[-1]
+            last_low = low[-1].reshape(1, -1)
+            last_median = median[-1].reshape(1, -1)
+            last_high = high[-1].reshape(1, -1)
+            print(f"last_input: {last_input.shape}") # (1, 72)
+            print(f"last_target: {last_target.shape}") # (1, 24)
+            print(f"last_low: {last_low.shape}") # (24,)
+            pt.plot_lagllama_predictions(last_input, last_target, last_median, last_low, last_high, country, reso, _type, _path = 'exp/lag-llama/result/')
 
-            # # Plot first 9 units' predictions
+            # pt.plot_chronos_predictions(_input, _target, median, low, high, country, reso, _type, _path = 'exp/lab-llama/result/')
+            # Plot first 9 units' predictions
             # plt.figure(figsize=(20, 15))
             # date_formater = mdates.DateFormatter('%b, %d')
             # plt.rcParams.update({'font.size': 15})
