@@ -40,6 +40,8 @@ def mae(real_values, pre_values):
 def rmse(real_values, pre_values):
     """
     give the real values and the predicted values to calculate the root mean squared error
+    
+    y shape: (batch_dim_0, batch_dim_1, ..., batch_dim_N, seq_len) or (batch_size, seq_len) or (seq_len,)
     """
-    rmse = np.sqrt(np.power(real_values - pre_values, 2).mean())
-    return rmse.mean()
+    rmse = np.sqrt(np.power(real_values - pre_values, 2).mean(axis=-1)) # (batch_size,)
+    return rmse.mean() # scalar
